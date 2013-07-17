@@ -1,0 +1,23 @@
+(load "Prelude.lampas")
+
+" Output to console
+"
+(write "Hello")
+
+" vararg compose and read from file
+"
+((compose* write read open-input-file) "test.lampas")
+
+" list->string, string->list and concatenation 
+"
+(write (list->string (concat (string->list "Hello") (string->list "World"))))
+
+" closure
+"
+(write (((lambda (x) (lambda (y) (+ x y))) 3) 4))
+
+" variables and function definition/application
+"
+(define x 3)
+(define (f x y) (sum x y))
+(f 1 x)
