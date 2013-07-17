@@ -66,3 +66,4 @@
 "
 (define (compose* . funcs) (foldr compose id funcs))
 (define (push a b) ((compose reverse cons) (list b (reverse a))))
+(define (concat a b) (fold push a b))

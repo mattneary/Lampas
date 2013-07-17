@@ -203,7 +203,7 @@ unpackBool :: LispVal -> ThrowsError Bool
 unpackBool (Bool b) = return b
 unpackBool notBool = throwError $ TypeMismatch "boolean" notBool
 
--- expose String functionality
+-- string->list
 toStrings :: String -> [LispVal]
 toStrings [] = []
 toStrings (x:xs) = (String [x]) : (toStrings xs)
@@ -211,6 +211,20 @@ toStrings (x:xs) = (String [x]) : (toStrings xs)
 toCharList :: [LispVal] -> ThrowsError LispVal
 toCharList args = do str <- unpackStr $ args !! 0
                      return $ List $ toStrings str
+
+-- used internally
+unpackStr' :: LispVal -> String
+unpackStr' (String s) = s
+
+-- used internally to allow for recursion (avoid monad mess)
+fromCharList' :: [LispVal] -> LispVal
+fromCharList' [List (String first : rest)] = String (first ++ ((unpackStr' . fromCharList') rest))
+fromCharList' ((String first) : rest) = String (first ++ ((unpackStr' . fromCharList') rest))
+fromCharList' [] = String ""
+
+-- list->string
+fromCharList :: [LispVal] -> ThrowsError LispVal
+fromCharList x = return $ fromCharList' x
 
 -- declare primitive values
 primitives :: [(String, [LispVal] -> ThrowsError LispVal)]
@@ -232,6 +246,7 @@ primitives = [("+", numericBinop (+)),
 			  ("string<=?", strBoolBinop (<=)),
 			  ("string>=?", strBoolBinop (>=)),
 			  ("string->list", toCharList),
+			  ("list->string", fromCharList),
               ("mod", numericBinop mod),
               ("quotient", numericBinop quot),
               ("remainder", numericBinop rem),
