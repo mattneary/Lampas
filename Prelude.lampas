@@ -61,3 +61,8 @@
 "
 (define (map func lst)      (foldr (lambda (x y) (cons (func x) y)) '() lst))
 (define (filter pred lst)   (foldr (lambda (x y) (if (pred x) (cons x y) y)) '() lst))
+
+" misc.
+"
+(define (compose* . funcs) (foldr compose id funcs))
+(define (push a b) ((compose reverse cons) (list b (reverse a))))

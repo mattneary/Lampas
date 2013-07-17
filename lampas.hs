@@ -203,6 +203,15 @@ unpackBool :: LispVal -> ThrowsError Bool
 unpackBool (Bool b) = return b
 unpackBool notBool = throwError $ TypeMismatch "boolean" notBool
 
+-- expose String functionality
+toStrings :: String -> [LispVal]
+toStrings [] = []
+toStrings (x:xs) = (String [x]) : (toStrings xs)
+
+toCharList :: [LispVal] -> ThrowsError LispVal
+toCharList args = do str <- unpackStr $ args !! 0
+                     return $ List $ toStrings str
+
 -- declare primitive values
 primitives :: [(String, [LispVal] -> ThrowsError LispVal)]
 primitives = [("+", numericBinop (+)),
@@ -222,6 +231,7 @@ primitives = [("+", numericBinop (+)),
 			  ("string>?", strBoolBinop (>)),
 			  ("string<=?", strBoolBinop (<=)),
 			  ("string>=?", strBoolBinop (>=)),
+			  ("string->list", toCharList),
               ("mod", numericBinop mod),
               ("quotient", numericBinop quot),
               ("remainder", numericBinop rem),
@@ -454,7 +464,7 @@ runOne args = do
 
 -- the REPL, a loop of eval-print until `quit`     
 runRepl :: IO ()
-runRepl = primitiveBindings >>= until_ (== "quit") (readPrompt "Lisp>>> ") . evalAndPrint
+runRepl = primitiveBindings >>= until_ (== "quit") (readPrompt "Lampas >> ") . evalAndPrint
 
 -- ##Input
 -- read in to a Lisp parser
