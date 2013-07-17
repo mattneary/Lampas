@@ -221,6 +221,7 @@ fromCharList' :: [LispVal] -> LispVal
 fromCharList' [List (String first : rest)] = String (first ++ ((unpackStr' . fromCharList') rest))
 fromCharList' ((String first) : rest) = String (first ++ ((unpackStr' . fromCharList') rest))
 fromCharList' [] = String ""
+fromCharList' notList = String ""
 
 -- list->string
 fromCharList :: [LispVal] -> ThrowsError LispVal

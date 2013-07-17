@@ -1,21 +1,42 @@
 (load "Prelude.lampas")
 
-(define prog "(λaa)0")
+(define prog "(λaa)(λaa)")
 
 (define (call lda rest) ())
 
 (define (eatParens expr) 
   (if 
     (eq? (head expr) ")") 
-    ""
-    (strconcat (head expr) (eatParens (tail expr)))))
+    (list "" (tail expr))
+    (list 
+      (strconcat 
+        (head expr) 
+        (car (eatParens (tail expr))))
+      ((compose car cdr) 
+        (list (eatParens (tail expr)))))))
+    
 (define (head string) ((compose car string->list) string))
 (define (tail string) ((compose* list->string cdr string->list) string))
-(define (parse expr env) 
+(define (parseExpr expr) 
+  (if 
+    (eqv? (head expr) "λ") 
+    (list 
+      'lambda 
+      ((compose head tail) (list expr))
+      (parse ((compose tail tail) (list expr))))
+    expr))
+(define (parseParen expr)
+  (if 
+    (equal? "" (car (cdr (eatParens (tail expr)))))
+    (parse (car (eatParens (tail expr))))
+    (list
+      (parse (car (eatParens (tail expr))))
+      (parse (car (cdr (eatParens (tail expr))))))))
+(define (parse expr) 
   (if 
     (eqv? (head expr) "(") 
-    (eatParens (tail expr)) 
-    "not"))
+    (parseParen expr)
+    (parseExpr expr)))
+ 
 
-(write (tail "abc"))
-(write (parse prog '()))
+(write (parse prog))
