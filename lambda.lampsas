@@ -37,6 +37,12 @@
     (eqv? (head expr) "(") 
     (parseParen expr)
     (parseExpr expr)))
+(define (eval expr)
+  (if 
+    (equal? (car expr) 'lambda)
+    (lambda (x) (id x))
+    ((eval (car expr)) 
+      (eval (car (cdr expr))))))
  
 
-(write (parse prog))
+(write (eval (parse prog)))
