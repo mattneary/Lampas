@@ -1,0 +1,21 @@
+(load "Prelude.lampas")
+
+(define prog "(λaa)0")
+
+(define (call lda rest) ())
+
+(define (eatParens expr) 
+  (if 
+    (eq? (head expr) ")") 
+    ""
+    (strconcat (head expr) (eatParens (tail expr)))))
+(define (head string) ((compose car string->list) string))
+(define (tail string) ((compose* list->string cdr string->list) string))
+(define (parse expr env) 
+  (if 
+    (eqv? (head expr) "(") 
+    (eatParens (tail expr)) 
+    "not"))
+
+(write (tail "abc"))
+(write (parse prog '()))

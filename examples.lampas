@@ -6,7 +6,7 @@
 
 " vararg compose and read from file
 "
-((compose* write read open-input-file) "test.lampas")
+((compose* write read open-input-file) "examples.lampas")
 
 " list->string, string->list and concatenation 
 "
