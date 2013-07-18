@@ -56,6 +56,7 @@ showVal (Port _) = "<IO port>"
 showVal (IOFunc _) = "<IO primitive>"                                     
                                     
 -- | # Error Handling
+instance Show LispError where show = showError
 data LispError = NumArgs Integer [LispVal]
                | TypeMismatch String LispVal
                | Parser ParseError
@@ -74,7 +75,6 @@ showError (TypeMismatch expected found) = "Invalid type: expected " ++ expected
                                        ++ ", found " ++ show found
 showError (Parser parseErr) = "Parse error at " ++ show parseErr               
 
-instance Show LispError where show = showError
 trapError action = catchError action (return . show)
 
 extractValue :: ThrowsError a -> a
