@@ -19,14 +19,22 @@ Syntax
 ------
 See examples of syntax in `src/test.lampas`.
 
-Usage
------
+Compilation
+-----------
 Compile the source using GHC and the Existential flag.
 
 ```sh
-ghc lampas.hs -XExistentialQuantification
+$ ghc Main.hs -XExistentialQuantification
 ```
 
+Or, if on a Unix machine, run the build script which will compile, test, and clean-up. Support for Windows will be added soon.
+
+```sh
+$ ./build.sh
+```
+
+Usage
+-----
 Then run the interpreter either with a program as a parameter or individually to fire up a REPL.
 
 ```sh
