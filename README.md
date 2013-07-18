@@ -1,6 +1,6 @@
 Lampas
 ======
-Lampas is my first attempt at a Scheme implementation of my own. Currently its unique features include lambda shorthand and vector notation.
+Lampas is my first attempt at a Scheme implementation of my own. Currently its unique features include lambda shorthand, vector notation, and Lisp-style macros.
 
 ```ruby
 [1 2 3]
@@ -8,6 +8,10 @@ Lampas is my first attempt at a Scheme implementation of my own. Currently its u
 "
 ({|x| (+ 1 x)} 5)
 " => 6
+"
+(define-syntax (quoter expr) (cdr expr))
+(quoter 1 "a" 'b)
+" => '(1 "a" b)
 "
 ```
 
