@@ -1,8 +1,19 @@
 Lampas
 ======
-Lampas is my first attempt at a Scheme implementation of my own. Right now it is a very minimal and traditional implementation, but I plan on giving it a unique syntax and eventually some power features.
+Lampas is my first attempt at a Scheme implementation of my own. Currently its unique features include lambda shorthand and vector notation.
 
-The emphasis of Lampas has not yet been decided; however, I intend to give it a specific focus.
+```ruby
+[1 2 3]
+" => '(1 2 3)
+"
+({|x| (+ 1 x)} 5)
+" => 6
+"
+```
+
+Syntax
+------
+See examples of syntax in `examples.lampas`.
 
 Usage
 -----
