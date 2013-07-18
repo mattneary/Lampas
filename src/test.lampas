@@ -32,7 +32,9 @@
     (* (fact (- n 1)) n)))
 (write (fact 3)) 
 
-" macros
+" hygienic macros
 "
-(define-syntax (rewr expr) (cdr expr))
-(write (rewr "a" (fact 3)))
+(define a 5)
+(define-syntax (test expr) (cons a (cdr expr)))
+(define (b a) (test a))
+(write (b 3))
