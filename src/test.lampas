@@ -31,3 +31,6 @@
     1 
     (* (fact (- n 1)) n)))
 (write (fact 3)) 
+
+(define (rewr expr) (cdr expr))
+(write (rewr "a" (fact 3)))

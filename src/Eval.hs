@@ -32,6 +32,19 @@ applyProc :: [LispVal] -> IOThrowsError LispVal
 applyProc [func, List args] = apply func args
 applyProc (func : args) = apply func args            
 
+-- | ## Macros
+hasRewrite (Atom name) = name == "rewr"
+hasRewrite badAtom = False
+
+rewrite env (Atom name) args = do
+    func <- getVar env name
+    apply func [List ((Atom name):args)]
+
+evalfun env (List (function : args)) = do 
+    func <- eval env function
+    argVals <- mapM (eval env) args
+    apply func argVals
+
 -- | ## Evaluate LispVals
 eval :: Env -> LispVal -> IOThrowsError LispVal
 eval env val@(String _) = return val
@@ -60,10 +73,7 @@ eval env (List (Atom "lambda" : DottedList params varargs : body)) =
     makeVarargs varargs env params body
 eval env (List (Atom "lambda" : varargs@(Atom _) : body)) =
     makeVarargs varargs env [] body
-eval env (List (function : args)) = do 
-    func <- eval env function
-    argVals <- mapM (eval env) args
-    apply func argVals
+eval env val@(List (function : args)) = if (hasRewrite function) then (rewrite env function args) else (evalfun env val)
 eval env badForm = throwError $ BadSpecialForm "Unrecognized special form" badForm
 
 -- | ## Fucntion Constructors
