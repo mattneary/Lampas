@@ -8,9 +8,9 @@
 " helpers for HOF
 "
 (define (id obj)           obj)
-(define (flip func)        (lambda (arg1 arg2) (func arg2 arg1)))
-(define (curry func arg1)  (lambda (arg) (apply func (cons arg1 (list arg)))))
-(define (compose f g)      (lambda (arg) (f (apply g arg))))
+(define (flip func)        {|arg1 arg2| (func arg2 arg1)})
+(define (curry func arg1)  {|arg| (apply func (cons arg1 (list arg)))})
+(define (compose f g)      {|arg| (f (apply g arg))})
 
 (define zero?              (curry = 0))
 (define positive?          (curry < 0))
@@ -40,11 +40,11 @@
 (define (sum . lst)         (fold + 0 lst))
 (define (product . lst)     (fold * 1 lst))
 (define (and . lst)         (fold && #t lst))
-(define (or . lst)          (fold || #f lst))      
+(define (or . lst)          (fold _or #f lst))      
 
-(define (max first . rest) (fold (lambda (old new) (if (> old new) old new)) first rest))
-(define (min first . rest) (fold (lambda (old new) (if (< old new) old new)) first rest))
-(define (length lst)        (fold (lambda (x y) (+ x 1)) 0 lst))
+(define (max first . rest) (fold {|old new| (if (> old new) old new)} first rest))
+(define (min first . rest) (fold {|old new| (if (< old new) old new)} first rest))
+(define (length lst)        (fold {|x y| (+ x 1)} 0 lst))
 (define (reverse lst)       (fold (flip cons) '() lst))
 
 " association functions
@@ -59,8 +59,8 @@
 
 " map and filter
 "
-(define (map func lst)      (foldr (lambda (x y) (cons (func x) y)) '() lst))
-(define (filter pred lst)   (foldr (lambda (x y) (if (pred x) (cons x y) y)) '() lst))
+(define (map func lst)      (foldr {|x y| (cons (func x) y)} '() lst))
+(define (filter pred lst)   (foldr {|x y| (if (pred x) (cons x y) y)} '() lst))
 
 " misc.
 "

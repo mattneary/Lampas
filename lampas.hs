@@ -76,7 +76,7 @@ data LispVal = Atom String
 
 -- character class `symbols`
 symbol :: Parser Char
-symbol = oneOf "!#$%&|*+-/:<=>?@^_~"
+symbol = oneOf "!#$%&*+-/:<=>?@^_~"
 
 -- parse an atomic value either as a bool or an atom
 parseAtom :: Parser LispVal
@@ -118,6 +118,25 @@ parseQuoted = do
     char '\''
     x <- parseExpr
     return $ List [Atom "quote", x]
+    
+-- parse vector shorthand
+parseVector :: Parser LispVal
+parseVector = do 
+       char '['
+       x <- try parseList <|> parseDottedList
+       char ']'
+       return $ List [Atom "quote", x]
+       
+-- parse ruby-style lambda shorthand
+parseLambda :: Parser LispVal
+parseLambda = do 
+      string "{|"      
+      args <- try parseList <|> parseDottedList
+      string "| "
+      body <- try parseExpr
+      optional (char ' ')
+      char '}'
+      return $ List [Atom "lambda", args, body]          
 
 -- match the expression to an expression type
 parseExpr :: Parser LispVal
@@ -125,10 +144,12 @@ parseExpr = parseAtom
          <|> parseString
          <|> parseNumber
          <|> parseQuoted
+         <|> parseVector
+         <|> parseLambda         
          <|> do char '('
                 x <- try parseList <|> parseDottedList
                 char ')'
-                return x
+                return x         
 
 -- ##Evaluation
 -- define errors
@@ -240,7 +261,7 @@ primitives = [("+", numericBinop (+)),
 			  (">=", numBoolBinop (>=)),
 			  ("<=", numBoolBinop (<=)),
 			  ("&&", boolBoolBinop (&&)),
-			  ("||", boolBoolBinop (||)),
+			  ("_or", boolBoolBinop (||)),
 			  ("string=?", strBoolBinop (==)),
 			  ("string<?", strBoolBinop (<)),
 			  ("string>?", strBoolBinop (>)),
