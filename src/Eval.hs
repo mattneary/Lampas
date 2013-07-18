@@ -33,11 +33,12 @@ applyProc [func, List args] = apply func args
 applyProc (func : args) = apply func args            
 
 -- | ## Macros
-hasRewrite (Atom name) = name == "rewr"
-hasRewrite badAtom = False
+hasRewrite :: LispVal -> Env -> IOThrowsError Bool
+hasRewrite (Atom name) env = liftIO $ isBound env (name ++ "-syntax")
+hasRewrite badAtom env = liftIO $ return False
 
 rewrite env (Atom name) args = do
-    func <- getVar env name
+    func <- getVar env (name ++ "-syntax")
     apply func [List ((Atom name):args)]
 
 evalfun env (List (function : args)) = do 
@@ -65,6 +66,8 @@ eval env (List [Atom "load", String filename]) =
     load filename >>= liftM last . mapM (eval env)    
 eval env (List (Atom "define" : List (Atom var : params) : body)) =
     makeNormalFunc env params body >>= defineVar env var
+eval env (List (Atom "define-syntax" : List (Atom var : params) : body)) =
+    makeNormalFunc env params body >>= defineVar env (var ++ "-syntax")    
 eval env (List (Atom "define" : DottedList (Atom var : params) varargs : body)) =
     makeVarargs varargs env params body >>= defineVar env var
 eval env (List (Atom "lambda" : List params : body)) =
@@ -73,7 +76,9 @@ eval env (List (Atom "lambda" : DottedList params varargs : body)) =
     makeVarargs varargs env params body
 eval env (List (Atom "lambda" : varargs@(Atom _) : body)) =
     makeVarargs varargs env [] body
-eval env val@(List (function : args)) = if (hasRewrite function) then (rewrite env function args) else (evalfun env val)
+eval env val@(List (function : args)) = do
+    hadRewrite <- hasRewrite function env
+    if hadRewrite then (rewrite env function args) else (evalfun env val)
 eval env badForm = throwError $ BadSpecialForm "Unrecognized special form" badForm
 
 -- | ## Fucntion Constructors
