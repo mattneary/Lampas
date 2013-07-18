@@ -13,7 +13,7 @@ Lampas is my first attempt at a Scheme implementation of my own. Currently its u
 
 Syntax
 ------
-See examples of syntax in `examples.lampas`.
+See examples of syntax in `src/test.lampas`.
 
 Usage
 -----

@@ -6,74 +6,10 @@ import Control.Monad.Error
 import System.IO
 import Data.IORef
 
--- ## Environment
-type Env = IORef [(String, IORef LispVal)]
-
--- ### Raise Errors to the state monad
-nullEnv :: IO Env
-nullEnv = newIORef []
-
-type IOThrowsError = ErrorT LispError IO
-
-liftThrows :: ThrowsError a -> IOThrowsError a
-liftThrows (Left err) = throwError err
-liftThrows (Right val) = return val
-
-runIOThrows :: IOThrowsError String -> IO String
-runIOThrows action = runErrorT (trapError action) >>= return . extractValue
-
--- check for presence of variable
-isBound :: Env -> String -> IO Bool
-isBound envRef var = readIORef envRef >>= return . maybe False (const True) . lookup var
-
--- get value of variable
-getVar :: Env -> String -> IOThrowsError LispVal
-getVar envRef var  =  do env <- liftIO $ readIORef envRef
-                         maybe (throwError $ UnboundVar "Getting an unbound variable" var)
-                               (liftIO . readIORef)
-                               (lookup var env)
-
--- set value of variable
-setVar :: Env -> String -> LispVal -> IOThrowsError LispVal
-setVar envRef var value = do env <- liftIO $ readIORef envRef
-                             maybe (throwError $ UnboundVar "Setting an unbound variable" var) 
-                                   (liftIO . (flip writeIORef value))
-                                   (lookup var env)
-                             return value
-
--- define a variable
-defineVar :: Env -> String -> LispVal -> IOThrowsError LispVal
-defineVar envRef var value = do 
-    alreadyDefined <- liftIO $ isBound envRef var 
-    if alreadyDefined 
-       then setVar envRef var value >> return value
-       else liftIO $ do 
-          valueRef <- newIORef value
-          env <- readIORef envRef
-          writeIORef envRef ((var, valueRef) : env)
-          return value
-
--- bind a series of variables
-bindVars :: Env -> [(String, LispVal)] -> IO Env
-bindVars envRef bindings = readIORef envRef >>= extendEnv bindings >>= newIORef
-    where extendEnv bindings env = liftM (++ env) (mapM addBinding bindings)
-          addBinding (var, value) = do ref <- newIORef value
-                                       return (var, ref)                                                                      
+import Types
+import Refs                                                                 
 
 -- ## Parsing
--- all primitives of Lisp
-data LispVal = Atom String
-              | List [LispVal]
-              | DottedList [LispVal] LispVal
-              | Number Integer
-              | String String
-              | Bool Bool
-              | IOFunc ([LispVal] -> IOThrowsError LispVal)
-              | Port Handle
-              | PrimitiveFunc ([LispVal] -> ThrowsError LispVal)
-              | Func {params :: [String], vararg :: (Maybe String), 
-                                    body :: [LispVal], closure :: Env}
-
 -- character class `symbols`
 symbol :: Parser Char
 symbol = oneOf "!#$%&*+-/:<=>?@^_~"
@@ -151,41 +87,7 @@ parseExpr = parseAtom
                 char ')'
                 return x         
 
--- ##Evaluation
--- define errors
-data LispError = NumArgs Integer [LispVal]
-               | TypeMismatch String LispVal
-               | Parser ParseError
-               | BadSpecialForm String LispVal
-               | NotFunction String String
-               | UnboundVar String String
-               | Default String
-
--- error rendering
-showError :: LispError -> String
-showError (UnboundVar message varname) = message ++ ": " ++ varname
-showError (BadSpecialForm message form) = message ++ ": " ++ show form
-showError (NotFunction message func) = message ++ ": " ++ show func
-showError (NumArgs expected found) = "Expected " ++ show expected 
-                                  ++ " args; found values " ++ unwordsList found
-showError (TypeMismatch expected found) = "Invalid type: expected " ++ expected
-                                       ++ ", found " ++ show found
-showError (Parser parseErr) = "Parse error at " ++ show parseErr
-
-instance Show LispError where show = showError
-trapError action = catchError action (return . show)
-
-extractValue :: ThrowsError a -> a
-extractValue (Right val) = val
-
--- inherit from Haskell Error
-instance Error LispError where
-     noMsg = Default "An error has occurred"
-     strMsg = Default
-
--- make Error type for Lisp parsing
-type ThrowsError = Either LispError               
-
+-- ##Evaluation              
 -- parse numbers and fold arithmetic operations
 numericBinop :: (Integer -> Integer -> Integer) -> [LispVal] -> ThrowsError LispVal
 numericBinop op singleVal@[_] = throwError $ NumArgs 2 singleVal
@@ -442,32 +344,6 @@ equal [arg1, arg2] = do
     eqvEquals <- eqv [arg1, arg2]
     return $ Bool $ (primitiveEquals || let (Bool x) = eqvEquals in x)
 equal badArgList = throwError $ NumArgs 2 badArgList        
-
--- ##Rendering
--- define a function for showing a list of `LispVals`
-unwordsList :: [LispVal] -> String
-unwordsList = unwords . map showVal
-
--- define show functions with pattern matching of all types
-showVal :: LispVal -> String
-showVal (String contents) = "\"" ++ contents ++ "\""
-showVal (Atom name) = name
-showVal (Number contents) = show contents
-showVal (Bool True) = "#t"
-showVal (Bool False) = "#f"
-showVal (List contents) = "(" ++ unwordsList contents ++ ")"
-showVal (DottedList head tail) = "(" ++ unwordsList head ++ " . " ++ showVal tail ++ ")"
-showVal (PrimitiveFunc _) = "<primitive>"
-showVal (Func {params = args, vararg = varargs, body = body, closure = env}) = 
-  "(lambda (" ++ unwords (map show args) ++ 
-     (case varargs of 
-        Nothing -> ""
-        Just arg -> " . " ++ arg) ++ ") ...)" 
-showVal (Port _) = "<IO port>"
-showVal (IOFunc _) = "<IO primitive>"        
-
--- set `showVal` as the showing mechanism of `LispVals`
-instance Show LispVal where show = showVal
 
 -- ##REPL/Executor
 flushStr :: String -> IO ()
