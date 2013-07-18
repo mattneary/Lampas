@@ -23,6 +23,10 @@
 (define (f x y) (sum x y))
 (f 1 x)
 
+" eval function
+"
+(write (eval '(cons 1 2)))
+
 " recursion
 "
 (define (fact n) 
@@ -35,6 +39,17 @@
 " hygienic macros
 "
 (define a 5)
-(define-syntax (test expr) (cons a (cdr expr)))
+(define-syntax test {|expr| (cons 'list (cdr expr))})
 (define (b a) (test a))
 (write (b 3))
+
+" quasiquotes
+"
+(define c 3)
+(write `(c ,c c ,c))
+
+"  quasiquotes + macros = <3
+"" TODO: make quasiquoting recursive to avoid the ,`(... ,a) hack
+"  TODO: make eval built-in to macros
+(define-syntax let {|expr| `(,`(lambda ,`(,(cadr expr)) ,(cadddr expr)) ,(caddr expr))})
+(eval (let a 5 (cons 1 2)))

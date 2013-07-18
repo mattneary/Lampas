@@ -9,24 +9,26 @@ import Data.IORef
 
 import Types
 
--- | ## Symbol Class of Characters
+-- | # Symbol Class of Characters
 symbol :: Parser Char
 symbol = oneOf "!#$%&*+-/:<=>?@^_~"
 
--- | ## Parsing
+-- | # Parsing
 parseExpr :: Parser LispVal
 parseExpr = parseAtom
          <|> parseString
          <|> parseNumber
          <|> parseQuoted
          <|> parseVector
-         <|> parseLambda         
+         <|> parseLambda  
+         <|> parseUnQuoted
+         <|> parseQuasiQuoted       
          <|> do char '('
                 x <- try parseList <|> parseDottedList
                 char ')'
                 return x
 
--- | ## Parse Atom/String/Number/List/Quoted/Vector/Lambda
+-- | # Parse Atom/String/Number/List/Quoted/Vector/Lambda
 parseAtom :: Parser LispVal
 parseAtom = do 
                 first <- letter <|> symbol
@@ -60,7 +62,7 @@ parseQuoted :: Parser LispVal
 parseQuoted = do
     char '\''
     x <- parseExpr
-    return $ List [Atom "quote", x]
+    return $ List [Atom "quote", x]       
     
 parseVector :: Parser LispVal
 parseVector = do 
@@ -68,6 +70,18 @@ parseVector = do
        x <- try parseList <|> parseDottedList
        char ']'
        return $ List [Atom "quote", x]
+       
+parseQuasiQuoted :: Parser LispVal
+parseQuasiQuoted = do
+    char '`'
+    x <- parseExpr
+    return $ List [Atom "quasiquote", x]     
+    
+parseUnQuoted :: Parser LispVal
+parseUnQuoted = do
+    char ','
+    x <- parseExpr
+    return $ List [Atom "unquote", x]             
        
 parseLambda :: Parser LispVal
 parseLambda = do 

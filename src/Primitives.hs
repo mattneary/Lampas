@@ -42,7 +42,7 @@ primitives = [("+", numericBinop (+)),
               ("cons", cons),
               ("eq?", eqv),
               ("eqv?", eqv),
-              ("equal?", equal)]
+              ("equal?", equal)]             
 
 ioPrimitives :: [(String, [LispVal] -> IOThrowsError LispVal)]
 ioPrimitives = [("apply", applyProc),
@@ -53,7 +53,16 @@ ioPrimitives = [("apply", applyProc),
                 ("read", readProc),
                 ("write", writeProc),
                 ("read-contents", readContents),
-                ("read-all", readAll)]
+                ("read-all", readAll),
+                ("eval", evil)]
+           
+-- | # Expose a User-Land Eval Function
+evalFlip :: LispVal -> Env -> IOThrowsError LispVal                
+evalFlip expr env = eval env expr
+evil :: [LispVal] -> IOThrowsError LispVal
+evil [exprs] = do
+    env <- liftIO $ primitiveBindings >>= flip bindVars [] 
+    evalFlip exprs env
                 
 -- | # Bind Primitives to Environment
 primitiveBindings :: IO Env

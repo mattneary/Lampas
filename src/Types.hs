@@ -80,7 +80,7 @@ trapError action = catchError action (return . show)
 extractValue :: ThrowsError a -> a
 extractValue (Right val) = val
 
--- | ## Inherit from Haskell Error
+-- | # Inherit from Haskell Error
 instance Error LispError where
      noMsg = Default "An error has occurred"
      strMsg = Default

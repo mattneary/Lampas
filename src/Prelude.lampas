@@ -68,3 +68,11 @@
 (define (push a b) ((compose reverse cons) (list b (reverse a))))
 (define (concat a b) (fold push a b))
 (define (strconcat a b) (list->string (concat (string->list a) (string->list b))))
+
+" list access shorthands
+"
+(define cadr {|x| (car (cdr x))})
+(define caddr {|x| (car (cdr (cdr x)))})
+(define cddr {|x| (cdr (cdr x))})
+(define cdddr {|x| (cdr (cdr (cdr x)))})
+(define cadddr {|x| (car (cdr (cdr (cdr x))))})

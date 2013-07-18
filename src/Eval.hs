@@ -11,10 +11,10 @@ import Types
 import Refs
 import IO
 
--- | ## Apply Arguments to Functions
+-- | # Apply Arguments to Functions
 apply :: LispVal -> [LispVal] -> IOThrowsError LispVal
 apply (PrimitiveFunc func) args = liftThrows $ func args
--- | ### Apply Arguments to User-Defined Functions
+-- | ## Apply Arguments to User-Defined Functions
 apply (Func params varargs body closure) args = 
     if num params /= num args && varargs == Nothing
        then throwError $ NumArgs (num params) args
@@ -27,12 +27,12 @@ apply (Func params varargs body closure) args =
               Nothing -> return env 
 apply (IOFunc func) args = func args  
 
--- | ## Apply a List of Arguments to Functions
+-- | # Apply a List of Arguments to Functions
 applyProc :: [LispVal] -> IOThrowsError LispVal
 applyProc [func, List args] = apply func args
 applyProc (func : args) = apply func args            
 
--- | ## Macros
+-- | # Macros
 hasRewrite :: LispVal -> Env -> IOThrowsError Bool
 hasRewrite (Atom name) env = liftIO $ isBound env (name ++ "-syntax")
 hasRewrite badAtom env = liftIO $ return False
@@ -45,14 +45,21 @@ evalfun env (List (function : args)) = do
     func <- eval env function
     argVals <- mapM (eval env) args
     apply func argVals
+    
+-- | # Quasiquoations
+evalCommas (List [Atom "unquote", val]) = val
+evalCommas normalAtom = List ([Atom "quote", normalAtom])
 
--- | ## Evaluate LispVals
+-- | # Evaluate LispVals
 eval :: Env -> LispVal -> IOThrowsError LispVal
 eval env val@(String _) = return val
 eval env val@(Number _) = return val
 eval env val@(Bool _) = return val
 eval env (Atom id) = getVar env id
 eval env (List [Atom "quote", val]) = return val
+eval env (List [Atom "quasiquote", List args]) = do 
+    argVals <- mapM ((eval env) . evalCommas) args
+    liftIO $ return $ List argVals    
 eval env (List [Atom "if", pred, conseq, alt]) = 
     do result <- eval env pred
        case result of
@@ -66,8 +73,8 @@ eval env (List [Atom "load", String filename]) =
     load filename >>= liftM last . mapM (eval env)    
 eval env (List (Atom "define" : List (Atom var : params) : body)) =
     makeNormalFunc env params body >>= defineVar env var
-eval env (List (Atom "define-syntax" : List (Atom var : params) : body)) =
-    makeNormalFunc env params body >>= defineVar env (var ++ "-syntax")    
+eval env (List [Atom "define-syntax", Atom var, body]) =
+    eval env body >>= defineVar env (var ++ "-syntax")
 eval env (List (Atom "define" : DottedList (Atom var : params) varargs : body)) =
     makeVarargs varargs env params body >>= defineVar env var
 eval env (List (Atom "lambda" : List params : body)) =
@@ -78,10 +85,10 @@ eval env (List (Atom "lambda" : varargs@(Atom _) : body)) =
     makeVarargs varargs env [] body
 eval env val@(List (function : args)) = do
     hadRewrite <- hasRewrite function env
-    if hadRewrite then (rewrite env function args) else (evalfun env val)
+    if hadRewrite then rewrite env function args else (evalfun env val)
 eval env badForm = throwError $ BadSpecialForm "Unrecognized special form" badForm
 
--- | ## Fucntion Constructors
+-- | # Fucntion Constructors
 makeFunc varargs env params body = return $ Func (map showVal params) varargs body env
 makeNormalFunc = makeFunc Nothing
 makeVarargs = makeFunc . Just . showVal  
