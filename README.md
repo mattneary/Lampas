@@ -1,6 +1,10 @@
 Lampas
 ======
-Lampas is my first Lisp; currently its unique features include lambda shorthand, vector notation, continuations, and Lisp-style macros. Macros allow for codes to be specified that will manipulate any S-Expressions which they begin. That is, if `a` were a macro, any S-Expression led with `a` would be passed to the macro definition prior to evaluation; an example is below. Continuations were defined purely with macros. The general workflow of a continuation is to initiate a continuation statement with `begincc`, and then in the context of the statement, where the value of interest is present, to call `call/cc` with a lambda taking a continuation as a parameter. That continuation can then be set to a variable for later calling, and an initial value should be returned. Upon calling the continuation, values should be quoted (for now).
+Lampas is my first Lisp; currently its unique features include lambda shorthand, vector notation, continuations, and Lisp-style macros. 
+
+Macros allow for codes to be specified that will manipulate any S-Expressions which they begin. That is, if `a` were a macro, any S-Expression led with `a` would be passed to the macro definition prior to evaluation; an example is below. 
+
+Continuations were defined purely with macros. The general workflow of a continuation is to initiate a continuation statement with `begincc`, and then in the context of the statement, where the value of interest is present, to call `call/cc` with a lambda taking a continuation as a parameter. That continuation can then be set to a variable for later calling, and an initial value should be returned. Upon calling the continuation, values should be quoted (for now).
 
 ```scheme
 [1 2 3]
@@ -70,7 +74,7 @@ Todo
 - `@,` unquote-splicing
 - `case` statements
 - `currying`
-- `continuations` - an early implementation is done (`env`-free)
+- `continuations` - an early implementation is done (`env`-free). To clean it up (remove `begincc`) I will need to add the option of a global macro, one called on every S-Expression.
 - `numerical tower`
 
 References
