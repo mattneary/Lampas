@@ -89,7 +89,7 @@ eval env val@(List (function : args)) = do
     if hadRewrite then rewrite env function args else (evalfun env val)
 eval env badForm = throwError $ BadSpecialForm "Unrecognized special form" badForm
 
--- | # Fucntion Constructors
+-- | # Function Constructors
 makeFunc varargs env params body = return $ Func (map showVal params) varargs body env
 makeNormalFunc = makeFunc Nothing
-makeVarargs = makeFunc . Just . showVal  
+makeVarargs = makeFunc . Just . showVal

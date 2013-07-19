@@ -4,14 +4,20 @@ Lampas is my first attempt at a Scheme implementation of my own. Currently its u
 
 ```ruby
 [1 2 3]
-" => '(1 2 3)
+" => (1 2 3)
 "
 ({|x| (+ 1 x)} 5)
 " => 6
 "
-(define-syntax (quoter expr) (cdr expr))
-(quoter 1 "a" 'b)
-" => '(1 "a" b)
+(define-syntax 
+  let 
+  {|expr| 
+    `((lambda 
+       (,(cadr expr)) 
+       ,(cadddr expr)) 
+       ,(caddr expr))})
+(let a 5 (cons a 2))
+" => (5 2)
 "
 ```
 
