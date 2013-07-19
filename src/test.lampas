@@ -2,19 +2,23 @@
 
 " Output to console
 "
+(write "# Output (= `Hello`)")
 (write "Hello")
 
 " vararg compose and read from file
 "
+(write "# Chained Operations and File IO (= `(load `Prelude.lampas`)`)")
 ((compose* write read open-input-file) "test.lampas")
 
 " list->string, string->list and concatenation 
 "
+(write "# String-List Conversion (= `HelloWorld`)")
 (write (list->string (concat (string->list "Hello") (string->list "World"))))
 
 " closure
 "
 (define fn {|x| {|y| (+ x y)}})
+(write "# Closures for Nested Lambdas (= 11)")
 (write ((fn 5) 6))
 
 " variables and function definition/application
@@ -25,6 +29,7 @@
 
 " eval function
 "
+(write "# Evaluation of Quoted Exprs. (= (1 . 2))")
 (write (eval '(cons 1 2)))
 
 " recursion
@@ -34,22 +39,24 @@
     (eqv? n 0) 
     1 
     (* (fact (- n 1)) n)))
+(write "# Recursive Patterns (= 6)")    
 (write (fact 3)) 
 
-" hygienic macros
+" hygienic macros with lambda definition
 "
 (define a 5)
-(define-syntax test {|expr| (cons 'list (cdr expr))})
-(define (b a) (test a))
-(write (b 3))
+(define-syntax test {|val| `(cons ,a ,val)})
+(write "# Hygienic Macros via Lambda (= (5 . 3))")
+(write ({|a| (test 3)} 3))
 
 " quasiquotes
 "
 (define c 3)
+(write "# Quasiquotes with Unquoting (= c 3 c 3)")
 (write `(c ,c c ,c))
 
 "  quasiquotes + macros = <3
-"" TODO: make eval built-in to macros
 "
-(define-syntax let {|expr| `((lambda (,(cadr expr)) ,(cadddr expr)) ,(caddr expr))})
-(eval (let a 5 (cons a 2)))
+(defmacro (let name val body) `((lambda (,name) ,body) ,val))
+(write "# Macros with Quasiquotes (= (5 . 2))")
+(write (let a 5 (cons a 2)))

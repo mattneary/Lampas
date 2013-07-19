@@ -38,8 +38,10 @@ hasRewrite (Atom name) env = liftIO $ isBound env (name ++ "-syntax")
 hasRewrite badAtom env = liftIO $ return False
 
 rewrite env (Atom name) args = do
-    func <- getVar env (name ++ "-syntax")
-    apply func [List ((Atom name):args)]
+    func <- getVar env (name ++ "-syntax")    
+    applied <- apply func args
+    eval env applied
+-- | applied <- apply func [List ((Atom name):args)]    
 
 evalfun env (List (function : args)) = do 
     func <- eval env function
@@ -76,6 +78,8 @@ eval env (List (Atom "define" : List (Atom var : params) : body)) =
     makeNormalFunc env params body >>= defineVar env var
 eval env (List [Atom "define-syntax", Atom var, body]) =
     eval env body >>= defineVar env (var ++ "-syntax")
+eval env (List (Atom "defmacro" : List (Atom var : params) : body)) =
+    makeNormalFunc env params body >>= defineVar env (var ++ "-syntax")    
 eval env (List (Atom "define" : DottedList (Atom var : params) varargs : body)) =
     makeVarargs varargs env params body >>= defineVar env var
 eval env (List (Atom "lambda" : List params : body)) =

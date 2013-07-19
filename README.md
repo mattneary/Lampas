@@ -1,6 +1,6 @@
 Lampas
 ======
-Lampas is my first attempt at a Scheme implementation of my own. Currently its unique features include lambda shorthand, vector notation, and Lisp-style macros. Macros allow for arbitrary features to be made as functions of S-Expressions which return a new S-Expression to be evaluated.
+Lampas is my first Lisp; currently its unique features include lambda shorthand, vector notation, and Lisp-style macros. Macros allow for arbitrary features to be made as functions of S-Expressions which return a new S-Expression to be evaluated.
 
 ```scheme
 [1 2 3]
