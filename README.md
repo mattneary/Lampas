@@ -81,3 +81,5 @@ References
 ----------
 - This is very much thanks to the tutorial [Write Yourself a Scheme in 48 Hours](http://en.wikibooks.org/wiki/Write_Yourself_a_Scheme_in_48_Hours) by *Jonathan Tang*. It makes quite clear how to implement a language in Haskell, developing a REPL early on and building it up to a full-fledged Scheme.
 - Fogus' [Caerbannog](https://github.com/fogus/caerbannog).
+- An introduction to continuations in Scheme, [On Continuations](http://dunsmor.com/lisp/onlisp/onlisp_24.html).
+- A discussion of macros in Scheme and Lisp, [On Macros](ftp://ftp.cs.utexas.edu/pub/garbage/cs345/schintro-v13/schintro_130.html)
