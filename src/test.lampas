@@ -42,11 +42,11 @@
 (write "# Recursive Patterns (= 6)")    
 (write (fact 3)) 
 
-" hygienic macros with lambda definition
+" hygienic macros with varargs
 "
 (define a 5)
-(define-syntax test {|val| `(cons ,a ,val)})
-(write "# Hygienic Macros via Lambda (= (5 . 3))")
+(defmacro (test . vals) `(cons ,a ,(car vals)))
+(write "# Hygienic Macros with Variable Arity (= (5 . 3))")
 (write ({|a| (test 3)} 3))
 
 " quasiquotes
