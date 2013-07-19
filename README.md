@@ -1,14 +1,16 @@
 Lampas
 ======
-Lampas is my first attempt at a Scheme implementation of my own. Currently its unique features include lambda shorthand, vector notation, and Lisp-style macros.
+Lampas is my first attempt at a Scheme implementation of my own. Currently its unique features include lambda shorthand, vector notation, and Lisp-style macros. Macros allow for arbitrary features to be made as functions of S-Expressions which return a new S-Expression to be evaluated.
 
-```ruby
+```scheme
 [1 2 3]
 " => (1 2 3)
 "
+
 ({|x| (+ 1 x)} 5)
 " => 6
 "
+
 (define-syntax 
   let 
   {|expr| 
