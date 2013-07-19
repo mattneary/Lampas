@@ -60,3 +60,11 @@
 (defmacro (let name val body) `((lambda (,name) ,body) ,val))
 (write "# Macros with Quasiquotes (= (5 . 2))")
 (write (let a 5 (cons a 2)))
+
+" continuations done purely with macros + eval
+"
+(define print 5)    
+(write "# Macro Defined Continuations (= initial \ second \ third)")
+(begincc (write (call/cc {|cc| (set! print cc) 'initial})))
+(print ''second)
+(print ''third)

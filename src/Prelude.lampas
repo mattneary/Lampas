@@ -72,7 +72,44 @@
 " list access shorthands
 "
 (define cadr {|x| (car (cdr x))})
+(define cadar {|x| (car (cdr (car x)))})
+(define caar {|x| (car (caar x))})
 (define caddr {|x| (car (cdr (cdr x)))})
 (define cddr {|x| (cdr (cdr x))})
 (define cdddr {|x| (cdr (cdr (cdr x)))})
 (define cadddr {|x| (car (cdr (cdr (cdr x))))})
+
+" substitution
+"
+(define (sub a b x) (if (eq? a x) b x))
+(define (distribute fn alist) (if (atom? alist) (fn alist) (map {|elm| (distribute fn elm)} alist)))
+(define (sublist a b alist) (distribute {|x| (sub a b x)} alist))
+(write (sublist 1 2 (list (list 1 1) 2 3)))
+
+" a `defmacro` analog for quoted forms within lisp
+"
+(define 
+  (submacro head fn alist) 
+  (if 
+    (atom? alist) 
+    alist 
+    (if 
+      (eq? 
+        (car alist) 
+        head) 
+      (fn alist) 
+      (map {|part| (submacro head fn part)} alist))))
+      
+" an early implementation of continuations
+"      
+(defmacro 
+  (begincc expr) 
+  (submacro 
+    'call/cc 
+    (lambda 
+      (part) 
+      `(,(cadr part) 
+      (lambda 
+        (val) 
+        (eval (submacro 'call/cc {|_| val} (quote ,expr))))))
+    expr))

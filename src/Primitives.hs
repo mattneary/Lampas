@@ -42,7 +42,8 @@ primitives = [("+", numericBinop (+)),
               ("cons", cons),
               ("eq?", eqv),
               ("eqv?", eqv),
-              ("equal?", equal)]             
+              ("equal?", equal),
+              ("atom?", atom)]             
 
 ioPrimitives :: [(String, [LispVal] -> IOThrowsError LispVal)]
 ioPrimitives = [("apply", applyProc),
@@ -54,7 +55,7 @@ ioPrimitives = [("apply", applyProc),
                 ("write", writeProc),
                 ("read-contents", readContents),
                 ("read-all", readAll),
-                ("eval", evil)]
+                ("eval", evil)]          
            
 -- | # Expose a User-Land Eval Function
 evalFlip :: LispVal -> Env -> IOThrowsError LispVal                
@@ -112,6 +113,12 @@ equal [arg1, arg2] = do
     eqvEquals <- eqv [arg1, arg2]
     return $ Bool $ (primitiveEquals || let (Bool x) = eqvEquals in x)
 equal badArgList = throwError $ NumArgs 2 badArgList  
+
+atom :: [LispVal] -> ThrowsError LispVal
+atom [Atom val] = return $ Bool True
+atom [Number val] = return $ Bool True
+atom [String val] = return $ Bool True
+atom other = return $ Bool False
 
 -- | # Data-Type Conversions
 -- | ## string->list
