@@ -21,7 +21,11 @@ Lampas is my first Lisp; currently its unique features include lambda shorthand,
 
 Syntax
 ------
-See examples of syntax in `src/test.lampas`.
+See examples of syntax in `src/test.lampas`. 
+
+For macros, after beginning with a `define-rewriter` approach, wherein macros received each S-Expression in which they were embedded as arguments, I instead opted for `defmacro`. `defmacro` parses components as arguments, but the full power of `define-rewriter` could be easily rebuilt. My implementation of macros was pretty straight-forward, each `defmacro` defined a function in the usual environment with a distinct name. From there, each S-Expression is checked for a corresponding macro name. If one is found, the tail of the S-Expression is passed as argument to the defined function. This method keeps macros hygienic. This implementation may be improper, or perhaps it has too much overhead, but it was very easily implemented.
+
+`@,` unquote-splicing is a todo.
 
 Compilation
 -----------
