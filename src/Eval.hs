@@ -41,7 +41,6 @@ rewrite env (Atom name) args = do
     func <- getVar env (name ++ "-syntax")    
     applied <- apply func args
     eval env applied
--- | applied <- apply func [List ((Atom name):args)]    
 
 evalfun env (List (function : args)) = do 
     func <- eval env function
@@ -83,7 +82,7 @@ eval env (List (Atom "defmacro" : DottedList (Atom var : params) varargs : body)
 eval env (List (Atom "define" : DottedList (Atom var : params) varargs : body)) =
     makeVarargs varargs env params body >>= defineVar env var
 eval env (List (Atom "lambda" : List params : body)) =
-    makeNormalFunc env params body
+    makeNormalFunc env params body    
 eval env (List (Atom "lambda" : DottedList params varargs : body)) =
     makeVarargs varargs env params body
 eval env (List (Atom "lambda" : varargs@(Atom _) : body)) =

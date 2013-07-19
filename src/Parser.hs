@@ -50,7 +50,7 @@ parseNumber :: Parser LispVal
 parseNumber = liftM (Number . read) $ many1 digit                                          
          
 parseList :: Parser LispVal
-parseList = liftM List $ sepBy parseExpr spaces         
+parseList = liftM List $ sepBy parseExpr spaces
 
 parseDottedList :: Parser LispVal
 parseDottedList = do
@@ -88,7 +88,7 @@ parseLambda = do
       string "{|"      
       args <- try parseList <|> parseDottedList
       string "| "
-      body <- try parseExpr
+      body <- try (sepBy parseExpr spaces)
       optional (char ' ')
       char '}'
-      return $ List [Atom "lambda", args, body]          
+      return $ List ((Atom "lambda"):args:body)
