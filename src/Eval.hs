@@ -46,9 +46,9 @@ evalfun env (List (function : args)) = do
     argVals <- mapM (eval env) args
     apply func argVals
     
--- | # Quasiquoations
+-- | # Quasiquotations
 evalCommas (List [Atom "unquote", val]) = val
-evalCommas normalAtom = List ([Atom "quote", normalAtom])
+evalCommas normalAtom = List [Atom "quasiquote", normalAtom]
 
 -- | # Evaluate LispVals
 eval :: Env -> LispVal -> IOThrowsError LispVal
@@ -59,7 +59,8 @@ eval env (Atom id) = getVar env id
 eval env (List [Atom "quote", val]) = return val
 eval env (List [Atom "quasiquote", List args]) = do 
     argVals <- mapM ((eval env) . evalCommas) args
-    liftIO $ return $ List argVals    
+    liftIO $ return $ List argVals
+eval env (List [Atom "quasiquote", arg]) = liftIO $ return arg
 eval env (List [Atom "if", pred, conseq, alt]) = 
     do result <- eval env pred
        case result of
