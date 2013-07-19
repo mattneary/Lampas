@@ -50,6 +50,7 @@
 
 "  quasiquotes + macros = <3
 "" TODO: make quasiquoting recursive to avoid the ,`(... ,a) hack
-"  TODO: make eval built-in to macros
+""  TODO: make eval built-in to macros
+"
 (define-syntax let {|expr| `(,`(lambda ,`(,(cadr expr)) ,(cadddr expr)) ,(caddr expr))})
 (eval (let a 5 (cons 1 2)))
