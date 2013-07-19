@@ -1,6 +1,6 @@
 Lampas
 ======
-Lampas is my first Lisp; currently its unique features include lambda shorthand, vector notation, and Lisp-style macros. Macros allow for arbitrary features to be made as functions of S-Expressions which return a new S-Expression to be evaluated.
+Lampas is my first Lisp; currently its unique features include lambda shorthand, vector notation, and Lisp-style macros. Macros allow for codes to be specified that will manipulate any S-Expressions which they begin. That is, if `a` were a macro, any S-Expression led with `a` would be passed to the macro definition prior to evaluation; an example is below.
 
 ```scheme
 [1 2 3]
@@ -11,13 +11,9 @@ Lampas is my first Lisp; currently its unique features include lambda shorthand,
 " => 6
 "
 
-(define-syntax 
-  let 
-  {|expr| 
-    `((lambda 
-       (,(cadr expr)) 
-       ,(cadddr expr)) 
-       ,(caddr expr))})
+(defmacro 
+  (let name val body) 
+  `((lambda (,name) ,body) ,val))
 (let a 5 (cons a 2))
 " => (5 2)
 "
@@ -52,7 +48,6 @@ Lampas >>
 
 ```sh
 $ ./lampas test.lampas
-4
 ```
 
 Include the library functions with the following.
