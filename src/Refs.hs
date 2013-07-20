@@ -19,19 +19,15 @@ getVar envRef var  =  do env <- liftIO $ readIORef envRef
                                (liftIO . readIORef)
                                (lookup var env)
                                
--- ## Render Environment 
-semiGround :: IORef LispVal -> IO LispVal
-semiGround val = do
-    grounded <- readIORef val
-    return grounded    
-                              
+-- ## Render Environment  
+-- Gets all environment definitions and selects the key elements as a `LispVal`.  
 renderEnv :: Env -> IOThrowsError [LispVal]
 renderEnv envRef = do
     env <- liftIO $ readIORef envRef
-    val <- getVar envRef "list"
     let (keys, vals) = unzip env in return $ (map (\k -> String k) keys)
 
--- ## Set variable
+-- ## Set Variable
+-- Performs a lookup on the environment associations to find a variable value.
 setVar :: Env -> String -> LispVal -> IOThrowsError LispVal
 setVar envRef var value = do env <- liftIO $ readIORef envRef
                              maybe (throwError $ UnboundVar "Setting an unbound variable" var) 
@@ -40,6 +36,7 @@ setVar envRef var value = do env <- liftIO $ readIORef envRef
                              return value
 
 -- ## Define variable
+-- Either finds and modifies an association on the `env` or creates a new one.
 defineVar :: Env -> String -> LispVal -> IOThrowsError LispVal
 defineVar envRef var value = do 
     alreadyDefined <- liftIO $ isBound envRef var 
@@ -52,6 +49,7 @@ defineVar envRef var value = do
           return value
 
 -- ## Bind a series of variables
+-- Converts a series of associations to an environment. Useful in initiation and `evalenv`.
 bindVars :: Env -> [(String, LispVal)] -> IO Env
 bindVars envRef bindings = readIORef envRef >>= extendEnv bindings >>= newIORef
     where extendEnv bindings env = liftM (++ env) (mapM addBinding bindings)

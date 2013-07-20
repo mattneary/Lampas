@@ -7,6 +7,7 @@ import System.IO
 import Data.IORef
 
 -- ## Environment
+-- A list of associations of values.
 type Env = IORef [(String, IORef LispVal)]
 type IOThrowsError = ErrorT LispError IO
 
@@ -21,6 +22,7 @@ runIOThrows :: IOThrowsError String -> IO String
 runIOThrows action = runErrorT (trapError action) >>= return . extractValue   
 
 -- ## Data Type Interfaces
+-- Definitions or packagings that constitute each data type.
 instance Show LispVal where show = showVal
 data LispVal = Atom String
               | List [LispVal]

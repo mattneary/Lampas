@@ -106,6 +106,7 @@
                 <a class="pilcrow" href="#section-2">&#182;</a>
               </div>
               <h2>Primitive Operations</h2>
+<p>Exposes relations on numbers, bools, strings, lists, and atoms.</p>
 
             </div>
             
@@ -115,20 +116,20 @@
               (<span class="string">"*"</span>, numericBinop (*)),
               (<span class="string">"/"</span>, numericBinop div),
               (<span class="string">"="</span>, numBoolBinop (==)),
-			  (<span class="string">"&lt;"</span>, numBoolBinop (&lt;)),
-  			  (<span class="string">"&gt;"</span>, numBoolBinop (&gt;)),
-			  (<span class="string">"/="</span>, numBoolBinop (/=)),
-			  (<span class="string">"&gt;="</span>, numBoolBinop (&gt;=)),
-			  (<span class="string">"&lt;="</span>, numBoolBinop (&lt;=)),
-			  (<span class="string">"&amp;&amp;"</span>, boolBoolBinop (&amp;&amp;)),
-			  (<span class="string">"_or"</span>, boolBoolBinop (||)),
-			  (<span class="string">"string=?"</span>, strBoolBinop (==)),
-			  (<span class="string">"string&lt;?"</span>, strBoolBinop (&lt;)),
-			  (<span class="string">"string&gt;?"</span>, strBoolBinop (&gt;)),
-			  (<span class="string">"string&lt;=?"</span>, strBoolBinop (&lt;=)),
-			  (<span class="string">"string&gt;=?"</span>, strBoolBinop (&gt;=)),
-			  (<span class="string">"string-&gt;list"</span>, toCharList),
-			  (<span class="string">"list-&gt;string"</span>, fromCharList),
+              (<span class="string">"&lt;"</span>, numBoolBinop (&lt;)),
+              (<span class="string">"&gt;"</span>, numBoolBinop (&gt;)),
+              (<span class="string">"/="</span>, numBoolBinop (/=)),
+              (<span class="string">"&gt;="</span>, numBoolBinop (&gt;=)),
+              (<span class="string">"&lt;="</span>, numBoolBinop (&lt;=)),
+              (<span class="string">"&amp;&amp;"</span>, boolBoolBinop (&amp;&amp;)),
+              (<span class="string">"_or"</span>, boolBoolBinop (||)),
+              (<span class="string">"string=?"</span>, strBoolBinop (==)),
+              (<span class="string">"string&lt;?"</span>, strBoolBinop (&lt;)),
+              (<span class="string">"string&gt;?"</span>, strBoolBinop (&gt;)),
+              (<span class="string">"string&lt;=?"</span>, strBoolBinop (&lt;=)),
+              (<span class="string">"string&gt;=?"</span>, strBoolBinop (&gt;=)),
+              (<span class="string">"string-&gt;list"</span>, toCharList),
+              (<span class="string">"list-&gt;string"</span>, fromCharList),
               (<span class="string">"mod"</span>, numericBinop mod),
               (<span class="string">"quotient"</span>, numericBinop quot),
               (<span class="string">"remainder"</span>, numericBinop rem),
@@ -138,9 +139,22 @@
               (<span class="string">"eq?"</span>, eqv),
               (<span class="string">"eqv?"</span>, eqv),
               (<span class="string">"equal?"</span>, equal),
-              (<span class="string">"atom?"</span>, atom)]             
+              (<span class="string">"atom?"</span>, atom)]</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-3">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-3">&#182;</a>
+              </div>
+              <p>Exposes File IO and an <code>apply</code> function.</p>
 
-<span class="title">ioPrimitives</span> :: [(<span class="type">String</span>, [<span class="type">LispVal</span>] -&gt; <span class="type">IOThrowsError</span> <span class="type">LispVal</span>)]
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="title">ioPrimitives</span> :: [(<span class="type">String</span>, [<span class="type">LispVal</span>] -&gt; <span class="type">IOThrowsError</span> <span class="type">LispVal</span>)]
 <span class="title">ioPrimitives</span> = [(<span class="string">"apply"</span>, applyProc),
                 (<span class="string">"open-input-file"</span>, makePort <span class="type">ReadMode</span>),
                 (<span class="string">"open-output-file"</span>, makePort <span class="type">WriteMode</span>),
@@ -156,13 +170,14 @@
         </li>
         
         
-        <li id="section-3">
+        <li id="section-4">
             <div class="annotation">
               
               <div class="pilwrap for-h2">
-                <a class="pilcrow" href="#section-3">&#182;</a>
+                <a class="pilcrow" href="#section-4">&#182;</a>
               </div>
               <h2>Expose a User-Land Eval Function</h2>
+<p><code>eval</code> is applied as an evaluator of expressions, and <code>evalenv</code> does the same with an associated list as an environment in which to operate.</p>
 
             </div>
             
@@ -179,13 +194,14 @@
         </li>
         
         
-        <li id="section-4">
+        <li id="section-5">
             <div class="annotation">
               
               <div class="pilwrap for-h2">
-                <a class="pilcrow" href="#section-4">&#182;</a>
+                <a class="pilcrow" href="#section-5">&#182;</a>
               </div>
               <h2>Bind Primitives to Environment</h2>
+<p>Sets up an environment with primitives.</p>
 
             </div>
             
@@ -197,13 +213,15 @@
         </li>
         
         
-        <li id="section-5">
+        <li id="section-6">
             <div class="annotation">
               
               <div class="pilwrap for-h2">
-                <a class="pilcrow" href="#section-5">&#182;</a>
+                <a class="pilcrow" href="#section-6">&#182;</a>
               </div>
               <h2>Elementary Functions</h2>
+<p>The elementary functions of McCarthy&#39;s List.</p>
+<p><code>car</code> is analogous to <code>head</code>.</p>
 
             </div>
             
@@ -211,16 +229,42 @@
 <span class="title">car</span> [<span class="type">List</span> (x : xs)] = return x
 <span class="title">car</span> [<span class="type">DottedList</span> (x : xs) _] = return x
 <span class="title">car</span> [badArg] = throwError $ <span class="type">TypeMismatch</span> <span class="string">"pair"</span> badArg
-<span class="title">car</span> badArgList = throwError $ <span class="type">NumArgs</span> <span class="number">1</span> badArgList   
+<span class="title">car</span> badArgList = throwError $ <span class="type">NumArgs</span> <span class="number">1</span> badArgList</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-7">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-7">&#182;</a>
+              </div>
+              <p><code>cdr</code> is analogous to <code>tail</code>.</p>
 
-<span class="title">cdr</span> :: [<span class="type">LispVal</span>] -&gt; <span class="type">ThrowsError</span> <span class="type">LispVal</span>
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="title">cdr</span> :: [<span class="type">LispVal</span>] -&gt; <span class="type">ThrowsError</span> <span class="type">LispVal</span>
 <span class="title">cdr</span> [<span class="type">List</span> (x : xs)] = return $ <span class="type">List</span> xs
 <span class="title">cdr</span> [<span class="type">DottedList</span> [_] x] = return x
 <span class="title">cdr</span> [<span class="type">DottedList</span> (_ : xs) x] = return $ <span class="type">DottedList</span> xs x
 <span class="title">cdr</span> [badArg] = throwError $ <span class="type">TypeMismatch</span> <span class="string">"pair"</span> badArg
-<span class="title">cdr</span> badArgList = throwError $ <span class="type">NumArgs</span> <span class="number">1</span> badArgList
+<span class="title">cdr</span> badArgList = throwError $ <span class="type">NumArgs</span> <span class="number">1</span> badArgList</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-8">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-8">&#182;</a>
+              </div>
+              <p><code>cons</code> is analogous to <code>(:)</code>.</p>
 
-<span class="title">cons</span> :: [<span class="type">LispVal</span>] -&gt; <span class="type">ThrowsError</span> <span class="type">LispVal</span>
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="title">cons</span> :: [<span class="type">LispVal</span>] -&gt; <span class="type">ThrowsError</span> <span class="type">LispVal</span>
 <span class="title">cons</span> [x1, <span class="type">List</span> []] = return $ <span class="type">List</span> [x1]
 <span class="title">cons</span> [x, <span class="type">List</span> xs] = return $ <span class="type">List</span> $ x : xs
 <span class="title">cons</span> [x, <span class="type">DottedList</span> xs xlast] = return $ <span class="type">DottedList</span> (x : xs) xlast
@@ -247,9 +291,22 @@
                       [<span class="type">AnyUnpacker</span> unpackNum, <span class="type">AnyUnpacker</span> unpackStr, <span class="type">AnyUnpacker</span> unpackBool]
     eqvEquals &lt;- eqv [arg1, arg2]
     return $ <span class="type">Bool</span> $ (primitiveEquals || <span class="keyword">let</span> (<span class="type">Bool</span> x) = eqvEquals <span class="keyword">in</span> x)
-<span class="title">equal</span> badArgList = throwError $ <span class="type">NumArgs</span> <span class="number">2</span> badArgList  
+<span class="title">equal</span> badArgList = throwError $ <span class="type">NumArgs</span> <span class="number">2</span> badArgList</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-9">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-9">&#182;</a>
+              </div>
+              <p>Basic type checking for atomics.</p>
 
-<span class="title">atom</span> :: [<span class="type">LispVal</span>] -&gt; <span class="type">ThrowsError</span> <span class="type">LispVal</span>
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="title">atom</span> :: [<span class="type">LispVal</span>] -&gt; <span class="type">ThrowsError</span> <span class="type">LispVal</span>
 <span class="title">atom</span> [<span class="type">Atom</span> val] = return $ <span class="type">Bool</span> <span class="type">True</span>
 <span class="title">atom</span> [<span class="type">Number</span> val] = return $ <span class="type">Bool</span> <span class="type">True</span>
 <span class="title">atom</span> [<span class="type">String</span> val] = return $ <span class="type">Bool</span> <span class="type">True</span>
@@ -258,11 +315,11 @@
         </li>
         
         
-        <li id="section-6">
+        <li id="section-10">
             <div class="annotation">
               
               <div class="pilwrap for-h2">
-                <a class="pilcrow" href="#section-6">&#182;</a>
+                <a class="pilcrow" href="#section-10">&#182;</a>
               </div>
               <h2>Data-Type Conversions</h2>
 <h3>string-&gt;list</h3>
@@ -280,11 +337,11 @@
         </li>
         
         
-        <li id="section-7">
+        <li id="section-11">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-7">&#182;</a>
+                <a class="pilcrow" href="#section-11">&#182;</a>
               </div>
               <p><em>used internally to allow for recursion (avoid monad mess)</em></p>
 
@@ -299,11 +356,11 @@
         </li>
         
         
-        <li id="section-8">
+        <li id="section-12">
             <div class="annotation">
               
               <div class="pilwrap for-h3">
-                <a class="pilcrow" href="#section-8">&#182;</a>
+                <a class="pilcrow" href="#section-12">&#182;</a>
               </div>
               <h3>list-&gt;string</h3>
 

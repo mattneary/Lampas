@@ -14,26 +14,27 @@ import Refs
 import Eval
 
 -- ## Primitive Operations
+-- Exposes relations on numbers, bools, strings, lists, and atoms.
 primitives :: [(String, [LispVal] -> ThrowsError LispVal)]
 primitives = [("+", numericBinop (+)),
               ("-", numericBinop (-)),
               ("*", numericBinop (*)),
               ("/", numericBinop div),
               ("=", numBoolBinop (==)),
-			  ("<", numBoolBinop (<)),
-  			  (">", numBoolBinop (>)),
-			  ("/=", numBoolBinop (/=)),
-			  (">=", numBoolBinop (>=)),
-			  ("<=", numBoolBinop (<=)),
-			  ("&&", boolBoolBinop (&&)),
-			  ("_or", boolBoolBinop (||)),
-			  ("string=?", strBoolBinop (==)),
-			  ("string<?", strBoolBinop (<)),
-			  ("string>?", strBoolBinop (>)),
-			  ("string<=?", strBoolBinop (<=)),
-			  ("string>=?", strBoolBinop (>=)),
-			  ("string->list", toCharList),
-			  ("list->string", fromCharList),
+              ("<", numBoolBinop (<)),
+              (">", numBoolBinop (>)),
+              ("/=", numBoolBinop (/=)),
+              (">=", numBoolBinop (>=)),
+              ("<=", numBoolBinop (<=)),
+              ("&&", boolBoolBinop (&&)),
+              ("_or", boolBoolBinop (||)),
+              ("string=?", strBoolBinop (==)),
+              ("string<?", strBoolBinop (<)),
+              ("string>?", strBoolBinop (>)),
+              ("string<=?", strBoolBinop (<=)),
+              ("string>=?", strBoolBinop (>=)),
+              ("string->list", toCharList),
+              ("list->string", fromCharList),
               ("mod", numericBinop mod),
               ("quotient", numericBinop quot),
               ("remainder", numericBinop rem),
@@ -45,6 +46,7 @@ primitives = [("+", numericBinop (+)),
               ("equal?", equal),
               ("atom?", atom)]             
 
+-- Exposes File IO and an `apply` function.
 ioPrimitives :: [(String, [LispVal] -> IOThrowsError LispVal)]
 ioPrimitives = [("apply", applyProc),
                 ("open-input-file", makePort ReadMode),
@@ -59,6 +61,7 @@ ioPrimitives = [("apply", applyProc),
                 ("evalenv", evilenv)]          
            
 -- ## Expose a User-Land Eval Function
+-- `eval` is applied as an evaluator of expressions, and `evalenv` does the same with an associated list as an environment in which to operate.
 evil :: [LispVal] -> IOThrowsError LispVal
 evil [exprs] = do
     env <- liftIO $ primitiveBindings >>= flip bindVars [] 
@@ -70,18 +73,23 @@ evilenv [List defs, exprs] = do
     eval env exprs
                 
 -- ## Bind Primitives to Environment
+-- Sets up an environment with primitives.
 primitiveBindings :: IO Env
 primitiveBindings = nullEnv >>= (flip bindVars $ map (makeFunc IOFunc) ioPrimitives
                                               ++ map (makeFunc PrimitiveFunc) primitives)
     where makeFunc constructor (var, func) = (var, constructor func)                   
                 
 -- ## Elementary Functions
+-- The elementary functions of McCarthy's List.
+
+-- `car` is analogous to `head`.
 car :: [LispVal] -> ThrowsError LispVal
 car [List (x : xs)] = return x
 car [DottedList (x : xs) _] = return x
 car [badArg] = throwError $ TypeMismatch "pair" badArg
 car badArgList = throwError $ NumArgs 1 badArgList   
 
+-- `cdr` is analogous to `tail`.
 cdr :: [LispVal] -> ThrowsError LispVal
 cdr [List (x : xs)] = return $ List xs
 cdr [DottedList [_] x] = return x
@@ -89,6 +97,7 @@ cdr [DottedList (_ : xs) x] = return $ DottedList xs x
 cdr [badArg] = throwError $ TypeMismatch "pair" badArg
 cdr badArgList = throwError $ NumArgs 1 badArgList
 
+-- `cons` is analogous to `(:)`.
 cons :: [LispVal] -> ThrowsError LispVal
 cons [x1, List []] = return $ List [x1]
 cons [x, List xs] = return $ List $ x : xs
@@ -118,6 +127,7 @@ equal [arg1, arg2] = do
     return $ Bool $ (primitiveEquals || let (Bool x) = eqvEquals in x)
 equal badArgList = throwError $ NumArgs 2 badArgList  
 
+-- Basic type checking for atomics.
 atom :: [LispVal] -> ThrowsError LispVal
 atom [Atom val] = return $ Bool True
 atom [Number val] = return $ Bool True

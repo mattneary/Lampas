@@ -74,20 +74,25 @@ evalCommas normalAtom = List [Atom "quasiquote", normalAtom]
 
 -- ## Evaluate LispVals
 eval :: Env -> LispVal -> IOThrowsError LispVal
+-- Pattern match against basic primitive types and return them.
 eval env val@(String _) = return val
 eval env val@(Number _) = return val
 eval env val@(Bool _) = return val
+-- An atom not caught as `quote`, `if`, etc. is a variable reference.
 eval env (Atom id) = getVar env id
+-- `quote` returns the literal form of quoted values, and `quasiquote` does the same, after searching for commas to parse via `evalCommas`.
 eval env (List [Atom "quote", val]) = return val
 eval env (List [Atom "quasiquote", List args]) = do 
     argVals <- mapM ((eval env) . evalCommas) args
     liftIO $ return $ List argVals
 eval env (List [Atom "quasiquote", arg]) = liftIO $ return arg
+-- `if` statement evaluation is lazy
 eval env (List [Atom "if", pred, conseq, alt]) = 
     do result <- eval env pred
        case result of
          Bool False -> eval env alt
          otherwise -> eval env conseq
+-- ## Variable Setters & Macros         
 eval env (List [Atom "set!", Atom var, form]) =
     eval env form >>= setVar env var
 eval env (List [Atom "define", Atom var, form]) =
@@ -96,20 +101,23 @@ eval env (List [Atom "load", String filename]) =
     load filename >>= liftM last . mapM (eval env)    
 eval env (List (Atom "define" : List (Atom var : params) : body)) =
     makeNormalFunc env params body >>= defineVar env var
-eval env (List (Atom "defenvmacro" : List (Atom var : params) : body)) =
-    makeNormalFunc env params body >>= defineVar env (var ++ "-syntax-env")    
+eval env (List (Atom "define" : DottedList (Atom var : params) varargs : body)) =
+    makeVarargs varargs env params body >>= defineVar env var    
+-- `defmacro` defines functions of a special naming format.    
 eval env (List (Atom "defmacro" : List (Atom var : params) : body)) =
     makeNormalFunc env params body >>= defineVar env (var ++ "-syntax")        
 eval env (List (Atom "defmacro" : DottedList (Atom var : params) varargs : body)) =
-    makeVarargs varargs env params body >>= defineVar env (var ++ "-syntax")    
-eval env (List (Atom "define" : DottedList (Atom var : params) varargs : body)) =
-    makeVarargs varargs env params body >>= defineVar env var
+    makeVarargs varargs env params body >>= defineVar env (var ++ "-syntax")        
+-- `defenvmacro` defines functions of another format.
+eval env (List (Atom "defenvmacro" : List (Atom var : params) : body)) =
+    makeNormalFunc env params body >>= defineVar env (var ++ "-syntax-env")    
 eval env (List (Atom "lambda" : List params : body)) =
     makeNormalFunc env params body    
 eval env (List (Atom "lambda" : DottedList params varargs : body)) =
     makeVarargs varargs env params body
 eval env (List (Atom "lambda" : varargs@(Atom _) : body)) =
     makeVarargs varargs env [] body
+-- A default S-Expression is checked for applicable macros, env-macros, and finally executed as a function call.    
 eval env val@(List (function : args)) = do
     hadRewrite <- hasRewrite function env
     hadEnvRewrite <- hasEnvRewrite function env

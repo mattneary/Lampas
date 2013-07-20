@@ -28,7 +28,7 @@ strBoolBinop = boolBinop unpackStr
 boolBoolBinop = boolBinop unpackBool
 
 
--- ## Unpack Numbers/Strings/Booleans/Equivalency
+-- ## Unpack Atomic Values
 data Unpacker = forall a. Eq a => AnyUnpacker (LispVal -> ThrowsError a)
 -- *requires `-XExistentialQuantification`*
 

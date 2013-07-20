@@ -124,18 +124,13 @@
                 <a class="pilcrow" href="#section-3">&#182;</a>
               </div>
               <h2>Render Environment</h2>
+<p>Gets all environment definitions and selects the key elements as a <code>LispVal</code>.  </p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre><span class="title">semiGround</span> :: <span class="type">IORef</span> <span class="type">LispVal</span> -&gt; <span class="type">IO</span> <span class="type">LispVal</span>
-<span class="title">semiGround</span> val = <span class="keyword">do</span>
-    grounded &lt;- readIORef val
-    return grounded    
-                              
-<span class="title">renderEnv</span> :: <span class="type">Env</span> -&gt; <span class="type">IOThrowsError</span> [<span class="type">LispVal</span>]
+            <div class="content"><div class='highlight'><pre><span class="title">renderEnv</span> :: <span class="type">Env</span> -&gt; <span class="type">IOThrowsError</span> [<span class="type">LispVal</span>]
 <span class="title">renderEnv</span> envRef = <span class="keyword">do</span>
     env &lt;- liftIO $ readIORef envRef
-    val &lt;- getVar envRef <span class="string">"list"</span>
     <span class="keyword">let</span> (keys, vals) = unzip env <span class="keyword">in</span> return $ (map (\k -&gt; <span class="type">String</span> k) keys)</pre></div></div>
             
         </li>
@@ -147,7 +142,8 @@
               <div class="pilwrap for-h2">
                 <a class="pilcrow" href="#section-4">&#182;</a>
               </div>
-              <h2>Set variable</h2>
+              <h2>Set Variable</h2>
+<p>Performs a lookup on the environment associations to find a variable value.</p>
 
             </div>
             
@@ -168,6 +164,7 @@
                 <a class="pilcrow" href="#section-5">&#182;</a>
               </div>
               <h2>Define variable</h2>
+<p>Either finds and modifies an association on the <code>env</code> or creates a new one.</p>
 
             </div>
             
@@ -192,6 +189,7 @@
                 <a class="pilcrow" href="#section-6">&#182;</a>
               </div>
               <h2>Bind a series of variables</h2>
+<p>Converts a series of associations to an environment. Useful in initiation and <code>evalenv</code>.</p>
 
             </div>
             
