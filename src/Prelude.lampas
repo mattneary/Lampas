@@ -84,6 +84,7 @@
 (define (sub a b x) (if (eq? a x) b x))
 (define (distribute fn alist) (if (atom? alist) (fn alist) (map {|elm| (distribute fn elm)} alist)))
 (define (sublist a b alist) (distribute {|x| (sub a b x)} alist))
+(write (sublist 1 2 (list (list 1 1) 2 3)))
 
 " a `defmacro` analog for quoted forms within lisp
 "
@@ -101,8 +102,8 @@
       
 " an early implementation of continuations
 "      
-(defmacro 
-  (begincc expr) 
+(defenvmacro 
+  (begincc env expr) 
   (submacro 
     'call/cc 
     (lambda 
@@ -110,5 +111,5 @@
       `(,(cadr part) 
       (lambda 
         (val) 
-        (eval (submacro 'call/cc {|_| val} (quote ,expr))))))
+        (evalenv (quote ,env) (submacro 'call/cc {|_| val} (quote ,expr))))))
     expr))
