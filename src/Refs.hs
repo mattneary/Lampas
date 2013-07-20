@@ -18,6 +18,18 @@ getVar envRef var  =  do env <- liftIO $ readIORef envRef
                          maybe (throwError $ UnboundVar "Getting an unbound variable" var)
                                (liftIO . readIORef)
                                (lookup var env)
+                               
+-- | # Render Environment 
+semiGround :: IORef LispVal -> IO LispVal
+semiGround val = do
+    grounded <- readIORef val
+    return grounded    
+                              
+renderEnv :: Env -> IOThrowsError [LispVal]
+renderEnv envRef = do
+    env <- liftIO $ readIORef envRef
+    val <- getVar envRef "list"
+    let (keys, vals) = unzip env in return $ (map (\k -> String k) keys)
 
 -- | # Set variable
 setVar :: Env -> String -> LispVal -> IOThrowsError LispVal

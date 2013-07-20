@@ -37,10 +37,25 @@ hasRewrite :: LispVal -> Env -> IOThrowsError Bool
 hasRewrite (Atom name) env = liftIO $ isBound env (name ++ "-syntax")
 hasRewrite badAtom env = liftIO $ return False
 
+hasEnvRewrite :: LispVal -> Env -> IOThrowsError Bool
+hasEnvRewrite (Atom name) env = liftIO $ isBound env (name ++ "-syntax-env")
+hasEnvRewrite badAtom env = liftIO $ return False
+
+positOnEnv (Func params varargs body closure) env = Func params varargs body env
+
 rewrite env (Atom name) args = do
     func <- getVar env (name ++ "-syntax")    
     applied <- apply func args
     eval env applied
+    
+stripEnv env = renderEnv env
+    
+rewritePosited env (Atom name) args = do
+    func <- getVar env (name ++ "-syntax-env")    
+    renderedEnv <- stripEnv env
+    renderedVals <- mapM (\(String val) -> getVar env val) renderedEnv
+    applied <- apply func ((List (map (\(key, val) -> List [key, val]) (zip renderedEnv renderedVals))):args)
+    eval env applied    
 
 evalfun env (List (function : args)) = do 
     func <- eval env function
@@ -75,6 +90,8 @@ eval env (List [Atom "load", String filename]) =
     load filename >>= liftM last . mapM (eval env)    
 eval env (List (Atom "define" : List (Atom var : params) : body)) =
     makeNormalFunc env params body >>= defineVar env var
+eval env (List (Atom "defenvmacro" : List (Atom var : params) : body)) =
+    makeNormalFunc env params body >>= defineVar env (var ++ "-syntax-env")    
 eval env (List (Atom "defmacro" : List (Atom var : params) : body)) =
     makeNormalFunc env params body >>= defineVar env (var ++ "-syntax")        
 eval env (List (Atom "defmacro" : DottedList (Atom var : params) varargs : body)) =
@@ -89,7 +106,12 @@ eval env (List (Atom "lambda" : varargs@(Atom _) : body)) =
     makeVarargs varargs env [] body
 eval env val@(List (function : args)) = do
     hadRewrite <- hasRewrite function env
-    if hadRewrite then rewrite env function args else (evalfun env val)
+    hadEnvRewrite <- hasEnvRewrite function env
+    if hadRewrite 
+      then rewrite env function args 
+      else if hadEnvRewrite
+        then rewritePosited env function args
+        else evalfun env val
 eval env badForm = throwError $ BadSpecialForm "Unrecognized special form" badForm
 
 -- | # Function Constructors

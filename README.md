@@ -71,7 +71,7 @@ Include the library functions with the following.
 
 Todo
 -----
-- `@,` unquote-splicing
+- `,@` unquote-splicing
 - `case` statements
 - `currying`
 - `continuations` - an early implementation is done (`env`-free). To clean it up (remove `begincc`) I will need to add the option of a global macro, one called on every S-Expression.

@@ -68,3 +68,9 @@
 (begincc (write (call/cc {|cc| (set! print cc) 'initial})))
 (print ''second)
 (print ''third)
+
+"  environment exposed to macros
+"" TODO: make eval capable of receiving an env
+"
+(defenvmacro (readmac env x) `(quote ,(car (reverse env))))
+(write (readmac 1))
