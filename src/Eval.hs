@@ -1,3 +1,4 @@
+-- The `Eval` module handles evaluation of already parsed expressions. Generally the evaluation is done by pattern matching, execution of functions, and recursion upon `eval`.
 module Eval where
 
 import Text.ParserCombinators.Parsec
@@ -12,9 +13,12 @@ import Refs
 import IO
 
 -- ## Apply Arguments to Functions
+-- Functions are either primitive or user-defined. Application simply pattern matches against these and assuming no errors, fires the underlying function with passed arguments.
+
 apply :: LispVal -> [LispVal] -> IOThrowsError LispVal
 apply (PrimitiveFunc func) args = liftThrows $ func args
 -- ### Apply Arguments to User-Defined Functions
+-- Check parameter count and then bind the closure to the environment, pass arguments and evaluate the body.
 apply (Func params varargs body closure) args = 
     if num params /= num args && varargs == Nothing
        then throwError $ NumArgs (num params) args
@@ -28,22 +32,29 @@ apply (Func params varargs body closure) args =
 apply (IOFunc func) args = func args  
 
 -- ## Apply a List of Arguments to Functions
+-- A primitive function for application of arguments to a function.
 applyProc :: [LispVal] -> IOThrowsError LispVal
 applyProc [func, List args] = apply func args
 applyProc (func : args) = apply func args            
 
 -- ## Macros
+-- Macros rewrite expressions of a given form prior to there evaluation.
 
 -- ### Check for Rewriters of Expressions
+-- Macro rewriters are stored in the same way as traditional functions. They are merely given a special flag and fired in a different way.
+
+-- Basic `defmacro` rewriters are checked for here.
 hasRewrite :: LispVal -> Env -> IOThrowsError Bool
 hasRewrite (Atom name) env = liftIO $ isBound env (name ++ "-syntax")
 hasRewrite badAtom env = liftIO $ return False
 
+-- Special `defenvmacro` rewriters are handled separately and are passed the environment of the expression they are substituting.
 hasEnvRewrite :: LispVal -> Env -> IOThrowsError Bool
 hasEnvRewrite (Atom name) env = liftIO $ isBound env (name ++ "-syntax-env")
 hasEnvRewrite badAtom env = liftIO $ return False
 
 -- ### Macro Rewriters
+-- When rewriting an expression by macro, the function is accessed just like any other, then applied with the rest of the expression as argument, and the returned expression is then evaluated.
 rewrite env (Atom name) args = do
     func <- getVar env (name ++ "-syntax")    
     applied <- apply func args
@@ -57,6 +68,7 @@ rewriteEnv env (Atom name) args = do
     eval env applied    
     
 -- ## Quasiquotations
+-- Quasiquotes allow for values to be escaped as literal via `,`. The parsing of this is made recursive by quasiquoting all sub-expressions.
 evalCommas (List [Atom "unquote", val]) = val
 evalCommas normalAtom = List [Atom "quasiquote", normalAtom]
 
@@ -108,12 +120,14 @@ eval env val@(List (function : args)) = do
         else evalfun env val
 eval env badForm = throwError $ BadSpecialForm "Unrecognized special form" badForm
 
+-- `evalfun` is delegated to if a matching expression is not interpreted as a macro.
 evalfun env (List (function : args)) = do 
     func <- eval env function
     argVals <- mapM (eval env) args
     apply func argVals
 
 -- ## Function Constructors
+-- Functions are made to match the `Func` type by these constructors.
 makeFunc varargs env params body = return $ Func (map showVal params) varargs body env
 makeNormalFunc = makeFunc Nothing
 makeVarargs = makeFunc . Just . showVal

@@ -13,6 +13,7 @@ import Eval
 import Primitives                
 
 -- ##REPL
+-- The REPL is based on repeated reading, evaluation, and printing until "quit".
 runRepl :: IO ()
 runRepl = primitiveBindings >>= until_ (== "quit") (readPrompt "Lampas >> ") . evalAndPrint
 
