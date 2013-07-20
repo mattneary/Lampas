@@ -11,10 +11,10 @@ import Types
 import Refs
 import IO
 
--- | # Apply Arguments to Functions
+-- ## Apply Arguments to Functions
 apply :: LispVal -> [LispVal] -> IOThrowsError LispVal
 apply (PrimitiveFunc func) args = liftThrows $ func args
--- | ## Apply Arguments to User-Defined Functions
+-- ### Apply Arguments to User-Defined Functions
 apply (Func params varargs body closure) args = 
     if num params /= num args && varargs == Nothing
        then throwError $ NumArgs (num params) args
@@ -27,14 +27,14 @@ apply (Func params varargs body closure) args =
               Nothing -> return env 
 apply (IOFunc func) args = func args  
 
--- | # Apply a List of Arguments to Functions
+-- ## Apply a List of Arguments to Functions
 applyProc :: [LispVal] -> IOThrowsError LispVal
 applyProc [func, List args] = apply func args
 applyProc (func : args) = apply func args            
 
--- | # Macros
+-- ## Macros
 
--- | ## Check for Rewriters of Expressions
+-- ### Check for Rewriters of Expressions
 hasRewrite :: LispVal -> Env -> IOThrowsError Bool
 hasRewrite (Atom name) env = liftIO $ isBound env (name ++ "-syntax")
 hasRewrite badAtom env = liftIO $ return False
@@ -43,7 +43,7 @@ hasEnvRewrite :: LispVal -> Env -> IOThrowsError Bool
 hasEnvRewrite (Atom name) env = liftIO $ isBound env (name ++ "-syntax-env")
 hasEnvRewrite badAtom env = liftIO $ return False
 
--- | ## Macro Rewriters
+-- ### Macro Rewriters
 rewrite env (Atom name) args = do
     func <- getVar env (name ++ "-syntax")    
     applied <- apply func args
@@ -56,11 +56,11 @@ rewriteEnv env (Atom name) args = do
     applied <- apply func ((List (map (\(key, val) -> List [key, val]) (zip renderedEnv renderedVals))):args)
     eval env applied    
     
--- | # Quasiquotations
+-- ## Quasiquotations
 evalCommas (List [Atom "unquote", val]) = val
 evalCommas normalAtom = List [Atom "quasiquote", normalAtom]
 
--- | # Evaluate LispVals
+-- ## Evaluate LispVals
 eval :: Env -> LispVal -> IOThrowsError LispVal
 eval env val@(String _) = return val
 eval env val@(Number _) = return val
@@ -113,7 +113,7 @@ evalfun env (List (function : args)) = do
     argVals <- mapM (eval env) args
     apply func argVals
 
--- | # Function Constructors
+-- ## Function Constructors
 makeFunc varargs env params body = return $ Func (map showVal params) varargs body env
 makeNormalFunc = makeFunc Nothing
 makeVarargs = makeFunc . Just . showVal

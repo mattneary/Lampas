@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>Types.hs</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, target-densitydpi=160dpi, initial-scale=1.0; maximum-scale=1.0; user-scalable=0;">
+  <link rel="stylesheet" media="all" href="docco.css" />
+</head>
+<body>
+  <div id="container">
+    <div id="background"></div>
+    
+      <ul id="jump_to">
+        <li>
+          <a class="large" href="javascript:void(0);">Jump To &hellip;</a>
+          <a class="small" href="javascript:void(0);">+</a>
+          <div id="jump_wrapper">
+          <div id="jump_page">
+            
+              
+              <a class="source" href="Eval.html">
+                Eval.hs
+              </a>
+            
+              
+              <a class="source" href="IO.html">
+                IO.hs
+              </a>
+            
+              
+              <a class="source" href="Interfaces.html">
+                Interfaces.hs
+              </a>
+            
+              
+              <a class="source" href="Main.html">
+                Main.hs
+              </a>
+            
+              
+              <a class="source" href="Parser.html">
+                Parser.hs
+              </a>
+            
+              
+              <a class="source" href="Primitives.html">
+                Primitives.hs
+              </a>
+            
+              
+              <a class="source" href="Refs.html">
+                Refs.hs
+              </a>
+            
+              
+              <a class="source" href="Types.html">
+                Types.hs
+              </a>
+            
+          </div>
+        </li>
+      </ul>
+    
+    <ul class="sections">
+        
+          <li id="title">
+              <div class="annotation">
+                  <h1>Types.hs</h1>
+              </div>
+          </li>
+        
+        
+        
+        <li id="section-1">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-1">&#182;</a>
+              </div>
+              
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="module"><span class="keyword">module</span> Types <span class="keyword">where</span></span>
+<span class="import"><span class="keyword">import</span> Text.ParserCombinators.Parsec</span>
+<span class="import"><span class="keyword">import</span> System.Environment</span>
+<span class="import"><span class="keyword">import</span> Control.Monad</span>
+<span class="import"><span class="keyword">import</span> Control.Monad.Error</span>
+<span class="import"><span class="keyword">import</span> System.IO</span>
+<span class="import"><span class="keyword">import</span> Data.IORef</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-2">
+            <div class="annotation">
+              
+              <div class="pilwrap for-h2">
+                <a class="pilcrow" href="#section-2">&#182;</a>
+              </div>
+              <h2>Environment</h2>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="typedef"><span class="keyword">type</span> <span class="type">Env</span> = <span class="type">IORef</span> [<span class="container">(<span class="type">String</span>, <span class="type">IORef</span> <span class="type">LispVal</span>)</span>]</span>
+<span class="typedef"><span class="keyword">type</span> <span class="type">IOThrowsError</span> = <span class="type">ErrorT</span> <span class="type">LispError</span> <span class="type">IO</span></span>
+
+<span class="title">nullEnv</span> :: <span class="type">IO</span> <span class="type">Env</span>
+<span class="title">nullEnv</span> = newIORef []
+
+<span class="title">liftThrows</span> :: <span class="type">ThrowsError</span> a -&gt; <span class="type">IOThrowsError</span> a
+<span class="title">liftThrows</span> (<span class="type">Left</span> err) = throwError err
+<span class="title">liftThrows</span> (<span class="type">Right</span> val) = return val
+
+<span class="title">runIOThrows</span> :: <span class="type">IOThrowsError</span> <span class="type">String</span> -&gt; <span class="type">IO</span> <span class="type">String</span>
+<span class="title">runIOThrows</span> action = runErrorT (trapError action) &gt;&gt;= return . extractValue</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-3">
+            <div class="annotation">
+              
+              <div class="pilwrap for-h2">
+                <a class="pilcrow" href="#section-3">&#182;</a>
+              </div>
+              <h2>Data Type Interfaces</h2>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="class"><span class="keyword">instance</span> <span class="type">Show</span> <span class="type">LispVal</span> <span class="keyword">where</span></span> show = showVal
+<span class="typedef"><span class="keyword">data</span> <span class="type">LispVal</span> = <span class="type">Atom</span> <span class="type">String</span></span>
+              | <span class="type">List</span> [<span class="type">LispVal</span>]
+              | <span class="type">DottedList</span> [<span class="type">LispVal</span>] <span class="type">LispVal</span>
+              | <span class="type">Number</span> <span class="type">Integer</span>
+              | <span class="type">String</span> <span class="type">String</span>
+              | <span class="type">Bool</span> <span class="type">Bool</span>
+              | <span class="type">IOFunc</span> ([<span class="type">LispVal</span>] -&gt; <span class="type">IOThrowsError</span> <span class="type">LispVal</span>)
+              | <span class="type">Port</span> <span class="type">Handle</span>
+              | <span class="type">PrimitiveFunc</span> ([<span class="type">LispVal</span>] -&gt; <span class="type">ThrowsError</span> <span class="type">LispVal</span>)
+              | <span class="type">Func</span> {params :: [<span class="type">String</span>], vararg :: (<span class="type">Maybe</span> <span class="type">String</span>), 
+                                    body :: [<span class="type">LispVal</span>], closure :: <span class="type">Env</span>}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-4">
+            <div class="annotation">
+              
+              <div class="pilwrap for-h2">
+                <a class="pilcrow" href="#section-4">&#182;</a>
+              </div>
+              <h2>Type Renderers for REPL</h2>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="title">unwordsList</span> :: [<span class="type">LispVal</span>] -&gt; <span class="type">String</span>
+<span class="title">unwordsList</span> = unwords . map showVal
+
+<span class="title">showVal</span> :: <span class="type">LispVal</span> -&gt; <span class="type">String</span>
+<span class="title">showVal</span> (<span class="type">String</span> contents) = <span class="string">"\""</span> ++ contents ++ <span class="string">"\""</span>
+<span class="title">showVal</span> (<span class="type">Atom</span> name) = name
+<span class="title">showVal</span> (<span class="type">Number</span> contents) = show contents
+<span class="title">showVal</span> (<span class="type">Bool</span> <span class="type">True</span>) = <span class="string">"#t"</span>
+<span class="title">showVal</span> (<span class="type">Bool</span> <span class="type">False</span>) = <span class="string">"#f"</span>
+<span class="title">showVal</span> (<span class="type">List</span> contents) = <span class="string">"("</span> ++ unwordsList contents ++ <span class="string">")"</span>
+<span class="title">showVal</span> (<span class="type">DottedList</span> head tail) = <span class="string">"("</span> ++ unwordsList head ++ <span class="string">" . "</span> ++ showVal tail ++ <span class="string">")"</span>
+<span class="title">showVal</span> (<span class="type">PrimitiveFunc</span> _) = <span class="string">"&lt;primitive&gt;"</span>
+<span class="title">showVal</span> (<span class="type">Func</span> {params = args, vararg = varargs, body = body, closure = env}) = 
+  <span class="string">"(lambda ("</span> ++ unwords (map show args) ++ 
+     (<span class="keyword">case</span> varargs <span class="keyword">of</span> 
+        <span class="type">Nothing</span> -&gt; <span class="string">""</span>
+        <span class="type">Just</span> arg -&gt; <span class="string">" . "</span> ++ arg) ++ <span class="string">") ...)"</span> 
+<span class="title">showVal</span> (<span class="type">Port</span> _) = <span class="string">"&lt;IO port&gt;"</span>
+<span class="title">showVal</span> (<span class="type">IOFunc</span> _) = <span class="string">"&lt;IO primitive&gt;"</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-5">
+            <div class="annotation">
+              
+              <div class="pilwrap for-h2">
+                <a class="pilcrow" href="#section-5">&#182;</a>
+              </div>
+              <h2>Error Handling</h2>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="class"><span class="keyword">instance</span> <span class="type">Show</span> <span class="type">LispError</span> <span class="keyword">where</span></span> show = showError
+<span class="typedef"><span class="keyword">data</span> <span class="type">LispError</span> = <span class="type">NumArgs</span> <span class="type">Integer</span> [<span class="type">LispVal</span>]</span>
+               | <span class="type">TypeMismatch</span> <span class="type">String</span> <span class="type">LispVal</span>
+               | <span class="type">Parser</span> <span class="type">ParseError</span>
+               | <span class="type">BadSpecialForm</span> <span class="type">String</span> <span class="type">LispVal</span>
+               | <span class="type">NotFunction</span> <span class="type">String</span> <span class="type">String</span>
+               | <span class="type">UnboundVar</span> <span class="type">String</span> <span class="type">String</span>
+               | <span class="type">Default</span> <span class="type">String</span>                                    
+               
+<span class="title">showError</span> :: <span class="type">LispError</span> -&gt; <span class="type">String</span>
+<span class="title">showError</span> (<span class="type">UnboundVar</span> message varname) = message ++ <span class="string">": "</span> ++ varname
+<span class="title">showError</span> (<span class="type">BadSpecialForm</span> message form) = message ++ <span class="string">": "</span> ++ show form
+<span class="title">showError</span> (<span class="type">NotFunction</span> message func) = message ++ <span class="string">": "</span> ++ show func
+<span class="title">showError</span> (<span class="type">NumArgs</span> expected found) = <span class="string">"Expected "</span> ++ show expected 
+                                  ++ <span class="string">" args; found values "</span> ++ unwordsList found
+<span class="title">showError</span> (<span class="type">TypeMismatch</span> expected found) = <span class="string">"Invalid type: expected "</span> ++ expected
+                                       ++ <span class="string">", found "</span> ++ show found
+<span class="title">showError</span> (<span class="type">Parser</span> parseErr) = <span class="string">"Parse error at "</span> ++ show parseErr               
+
+<span class="title">trapError</span> action = catchError action (return . show)
+
+<span class="title">extractValue</span> :: <span class="type">ThrowsError</span> a -&gt; a
+<span class="title">extractValue</span> (<span class="type">Right</span> val) = val</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-6">
+            <div class="annotation">
+              
+              <div class="pilwrap for-h2">
+                <a class="pilcrow" href="#section-6">&#182;</a>
+              </div>
+              <h2>Inherit from Haskell Error</h2>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="class"><span class="keyword">instance</span> <span class="type">Error</span> <span class="type">LispError</span> <span class="keyword">where</span></span>
+     noMsg = <span class="type">Default</span> <span class="string">"An error has occurred"</span>
+     strMsg = <span class="type">Default</span>
+
+<span class="typedef"><span class="keyword">type</span> <span class="type">ThrowsError</span> = <span class="type">Either</span> <span class="type">LispError</span> </span></pre></div></div>
+            
+        </li>
+        
+    </ul>
+  </div>
+</body>
+</html>

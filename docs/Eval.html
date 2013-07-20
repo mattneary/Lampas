@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>Eval.hs</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, target-densitydpi=160dpi, initial-scale=1.0; maximum-scale=1.0; user-scalable=0;">
+  <link rel="stylesheet" media="all" href="docco.css" />
+</head>
+<body>
+  <div id="container">
+    <div id="background"></div>
+    
+      <ul id="jump_to">
+        <li>
+          <a class="large" href="javascript:void(0);">Jump To &hellip;</a>
+          <a class="small" href="javascript:void(0);">+</a>
+          <div id="jump_wrapper">
+          <div id="jump_page">
+            
+              
+              <a class="source" href="Eval.html">
+                Eval.hs
+              </a>
+            
+              
+              <a class="source" href="IO.html">
+                IO.hs
+              </a>
+            
+              
+              <a class="source" href="Interfaces.html">
+                Interfaces.hs
+              </a>
+            
+              
+              <a class="source" href="Main.html">
+                Main.hs
+              </a>
+            
+              
+              <a class="source" href="Parser.html">
+                Parser.hs
+              </a>
+            
+              
+              <a class="source" href="Primitives.html">
+                Primitives.hs
+              </a>
+            
+              
+              <a class="source" href="Refs.html">
+                Refs.hs
+              </a>
+            
+              
+              <a class="source" href="Types.html">
+                Types.hs
+              </a>
+            
+          </div>
+        </li>
+      </ul>
+    
+    <ul class="sections">
+        
+          <li id="title">
+              <div class="annotation">
+                  <h1>Eval.hs</h1>
+              </div>
+          </li>
+        
+        
+        
+        <li id="section-1">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-1">&#182;</a>
+              </div>
+              
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="module"><span class="keyword">module</span> Eval <span class="keyword">where</span></span>
+
+<span class="import"><span class="keyword">import</span> Text.ParserCombinators.Parsec</span>
+<span class="import"><span class="keyword">import</span> System.Environment</span>
+<span class="import"><span class="keyword">import</span> Control.Monad</span>
+<span class="import"><span class="keyword">import</span> Control.Monad.Error</span>
+<span class="import"><span class="keyword">import</span> System.IO</span>
+<span class="import"><span class="keyword">import</span> Data.IORef</span>
+
+<span class="import"><span class="keyword">import</span> Types</span>
+<span class="import"><span class="keyword">import</span> Refs</span>
+<span class="import"><span class="keyword">import</span> IO</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-2">
+            <div class="annotation">
+              
+              <div class="pilwrap for-h2">
+                <a class="pilcrow" href="#section-2">&#182;</a>
+              </div>
+              <h2>Apply Arguments to Functions</h2>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="title">apply</span> :: <span class="type">LispVal</span> -&gt; [<span class="type">LispVal</span>] -&gt; <span class="type">IOThrowsError</span> <span class="type">LispVal</span>
+<span class="title">apply</span> (<span class="type">PrimitiveFunc</span> func) args = liftThrows $ func args</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-3">
+            <div class="annotation">
+              
+              <div class="pilwrap for-h3">
+                <a class="pilcrow" href="#section-3">&#182;</a>
+              </div>
+              <h3>Apply Arguments to User-Defined Functions</h3>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="title">apply</span> (<span class="type">Func</span> params varargs body closure) args = 
+    <span class="keyword">if</span> num params /= num args &amp;&amp; varargs == <span class="type">Nothing</span>
+       <span class="keyword">then</span> throwError $ <span class="type">NumArgs</span> (num params) args
+       <span class="keyword">else</span> (liftIO $ bindVars closure $ zip params args) &gt;&gt;= bindVarArgs varargs &gt;&gt;= evalBody
+    <span class="keyword">where</span> remainingArgs = drop (length params) args
+          num = toInteger . length
+          evalBody env = liftM last $ mapM (eval env) body 
+          bindVarArgs arg env = <span class="keyword">case</span> arg <span class="keyword">of</span>
+              <span class="type">Just</span> argName -&gt; liftIO $ bindVars env [(argName, <span class="type">List</span> $ remainingArgs)]
+              <span class="type">Nothing</span> -&gt; return env 
+<span class="title">apply</span> (<span class="type">IOFunc</span> func) args = func args</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-4">
+            <div class="annotation">
+              
+              <div class="pilwrap for-h2">
+                <a class="pilcrow" href="#section-4">&#182;</a>
+              </div>
+              <h2>Apply a List of Arguments to Functions</h2>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="title">applyProc</span> :: [<span class="type">LispVal</span>] -&gt; <span class="type">IOThrowsError</span> <span class="type">LispVal</span>
+<span class="title">applyProc</span> [func, <span class="type">List</span> args] = apply func args
+<span class="title">applyProc</span> (func : args) = apply func args</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-5">
+            <div class="annotation">
+              
+              <div class="pilwrap for-h2">
+                <a class="pilcrow" href="#section-5">&#182;</a>
+              </div>
+              <h2>Macros</h2>
+<h3>Check for Rewriters of Expressions</h3>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="title">hasRewrite</span> :: <span class="type">LispVal</span> -&gt; <span class="type">Env</span> -&gt; <span class="type">IOThrowsError</span> <span class="type">Bool</span>
+<span class="title">hasRewrite</span> (<span class="type">Atom</span> name) env = liftIO $ isBound env (name ++ <span class="string">"-syntax"</span>)
+<span class="title">hasRewrite</span> badAtom env = liftIO $ return <span class="type">False</span>
+
+<span class="title">hasEnvRewrite</span> :: <span class="type">LispVal</span> -&gt; <span class="type">Env</span> -&gt; <span class="type">IOThrowsError</span> <span class="type">Bool</span>
+<span class="title">hasEnvRewrite</span> (<span class="type">Atom</span> name) env = liftIO $ isBound env (name ++ <span class="string">"-syntax-env"</span>)
+<span class="title">hasEnvRewrite</span> badAtom env = liftIO $ return <span class="type">False</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-6">
+            <div class="annotation">
+              
+              <div class="pilwrap for-h3">
+                <a class="pilcrow" href="#section-6">&#182;</a>
+              </div>
+              <h3>Macro Rewriters</h3>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="title">rewrite</span> env (<span class="type">Atom</span> name) args = <span class="keyword">do</span>
+    func &lt;- getVar env (name ++ <span class="string">"-syntax"</span>)    
+    applied &lt;- apply func args
+    eval env applied
+    
+<span class="title">rewriteEnv</span> env (<span class="type">Atom</span> name) args = <span class="keyword">do</span>
+    func &lt;- getVar env (name ++ <span class="string">"-syntax-env"</span>)    
+    renderedEnv &lt;- renderEnv env
+    renderedVals &lt;- mapM (\(<span class="type">String</span> val) -&gt; getVar env val) renderedEnv
+    applied &lt;- apply func ((<span class="type">List</span> (map (\(key, val) -&gt; <span class="type">List</span> [key, val]) (zip renderedEnv renderedVals))):args)
+    eval env applied</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-7">
+            <div class="annotation">
+              
+              <div class="pilwrap for-h2">
+                <a class="pilcrow" href="#section-7">&#182;</a>
+              </div>
+              <h2>Quasiquotations</h2>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="title">evalCommas</span> (<span class="type">List</span> [<span class="type">Atom</span> <span class="string">"unquote"</span>, val]) = val
+<span class="title">evalCommas</span> normalAtom = <span class="type">List</span> [<span class="type">Atom</span> <span class="string">"quasiquote"</span>, normalAtom]</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-8">
+            <div class="annotation">
+              
+              <div class="pilwrap for-h2">
+                <a class="pilcrow" href="#section-8">&#182;</a>
+              </div>
+              <h2>Evaluate LispVals</h2>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="title">eval</span> :: <span class="type">Env</span> -&gt; <span class="type">LispVal</span> -&gt; <span class="type">IOThrowsError</span> <span class="type">LispVal</span>
+<span class="title">eval</span> env val@(<span class="type">String</span> _) = return val
+<span class="title">eval</span> env val@(<span class="type">Number</span> _) = return val
+<span class="title">eval</span> env val@(<span class="type">Bool</span> _) = return val
+<span class="title">eval</span> env (<span class="type">Atom</span> id) = getVar env id
+<span class="title">eval</span> env (<span class="type">List</span> [<span class="type">Atom</span> <span class="string">"quote"</span>, val]) = return val
+<span class="title">eval</span> env (<span class="type">List</span> [<span class="type">Atom</span> <span class="string">"quasiquote"</span>, <span class="type">List</span> args]) = <span class="keyword">do</span> 
+    argVals &lt;- mapM ((eval env) . evalCommas) args
+    liftIO $ return $ <span class="type">List</span> argVals
+<span class="title">eval</span> env (<span class="type">List</span> [<span class="type">Atom</span> <span class="string">"quasiquote"</span>, arg]) = liftIO $ return arg
+<span class="title">eval</span> env (<span class="type">List</span> [<span class="type">Atom</span> <span class="string">"if"</span>, pred, conseq, alt]) = 
+    <span class="keyword">do</span> result &lt;- eval env pred
+       <span class="keyword">case</span> result <span class="keyword">of</span>
+         <span class="type">Bool</span> <span class="type">False</span> -&gt; eval env alt
+         otherwise -&gt; eval env conseq
+<span class="title">eval</span> env (<span class="type">List</span> [<span class="type">Atom</span> <span class="string">"set!"</span>, <span class="type">Atom</span> var, form]) =
+    eval env form &gt;&gt;= setVar env var
+<span class="title">eval</span> env (<span class="type">List</span> [<span class="type">Atom</span> <span class="string">"define"</span>, <span class="type">Atom</span> var, form]) =
+    eval env form &gt;&gt;= defineVar env var
+<span class="title">eval</span> env (<span class="type">List</span> [<span class="type">Atom</span> <span class="string">"load"</span>, <span class="type">String</span> filename]) = 
+    load filename &gt;&gt;= liftM last . mapM (eval env)    
+<span class="title">eval</span> env (<span class="type">List</span> (<span class="type">Atom</span> <span class="string">"define"</span> : <span class="type">List</span> (<span class="type">Atom</span> var : params) : body)) =
+    makeNormalFunc env params body &gt;&gt;= defineVar env var
+<span class="title">eval</span> env (<span class="type">List</span> (<span class="type">Atom</span> <span class="string">"defenvmacro"</span> : <span class="type">List</span> (<span class="type">Atom</span> var : params) : body)) =
+    makeNormalFunc env params body &gt;&gt;= defineVar env (var ++ <span class="string">"-syntax-env"</span>)    
+<span class="title">eval</span> env (<span class="type">List</span> (<span class="type">Atom</span> <span class="string">"defmacro"</span> : <span class="type">List</span> (<span class="type">Atom</span> var : params) : body)) =
+    makeNormalFunc env params body &gt;&gt;= defineVar env (var ++ <span class="string">"-syntax"</span>)        
+<span class="title">eval</span> env (<span class="type">List</span> (<span class="type">Atom</span> <span class="string">"defmacro"</span> : <span class="type">DottedList</span> (<span class="type">Atom</span> var : params) varargs : body)) =
+    makeVarargs varargs env params body &gt;&gt;= defineVar env (var ++ <span class="string">"-syntax"</span>)    
+<span class="title">eval</span> env (<span class="type">List</span> (<span class="type">Atom</span> <span class="string">"define"</span> : <span class="type">DottedList</span> (<span class="type">Atom</span> var : params) varargs : body)) =
+    makeVarargs varargs env params body &gt;&gt;= defineVar env var
+<span class="title">eval</span> env (<span class="type">List</span> (<span class="type">Atom</span> <span class="string">"lambda"</span> : <span class="type">List</span> params : body)) =
+    makeNormalFunc env params body    
+<span class="title">eval</span> env (<span class="type">List</span> (<span class="type">Atom</span> <span class="string">"lambda"</span> : <span class="type">DottedList</span> params varargs : body)) =
+    makeVarargs varargs env params body
+<span class="title">eval</span> env (<span class="type">List</span> (<span class="type">Atom</span> <span class="string">"lambda"</span> : varargs@(<span class="type">Atom</span> _) : body)) =
+    makeVarargs varargs env [] body
+<span class="title">eval</span> env val@(<span class="type">List</span> (function : args)) = <span class="keyword">do</span>
+    hadRewrite &lt;- hasRewrite function env
+    hadEnvRewrite &lt;- hasEnvRewrite function env
+    <span class="keyword">if</span> hadRewrite 
+      <span class="keyword">then</span> rewrite env function args 
+      <span class="keyword">else</span> <span class="keyword">if</span> hadEnvRewrite
+        <span class="keyword">then</span> rewriteEnv env function args
+        <span class="keyword">else</span> evalfun env val
+<span class="title">eval</span> env badForm = throwError $ <span class="type">BadSpecialForm</span> <span class="string">"Unrecognized special form"</span> badForm
+
+<span class="title">evalfun</span> env (<span class="type">List</span> (function : args)) = <span class="keyword">do</span> 
+    func &lt;- eval env function
+    argVals &lt;- mapM (eval env) args
+    apply func argVals</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-9">
+            <div class="annotation">
+              
+              <div class="pilwrap for-h2">
+                <a class="pilcrow" href="#section-9">&#182;</a>
+              </div>
+              <h2>Function Constructors</h2>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="title">makeFunc</span> varargs env params body = return $ <span class="type">Func</span> (map showVal params) varargs body env
+<span class="title">makeNormalFunc</span> = makeFunc <span class="type">Nothing</span>
+<span class="title">makeVarargs</span> = makeFunc . <span class="type">Just</span> . showVal</pre></div></div>
+            
+        </li>
+        
+    </ul>
+  </div>
+</body>
+</html>

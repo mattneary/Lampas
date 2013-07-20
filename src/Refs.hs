@@ -12,14 +12,14 @@ import Types
 isBound :: Env -> String -> IO Bool
 isBound envRef var = readIORef envRef >>= return . maybe False (const True) . lookup var
 
--- | # Get variable
+-- ## Get variable
 getVar :: Env -> String -> IOThrowsError LispVal
 getVar envRef var  =  do env <- liftIO $ readIORef envRef
                          maybe (throwError $ UnboundVar "Getting an unbound variable" var)
                                (liftIO . readIORef)
                                (lookup var env)
                                
--- | # Render Environment 
+-- ## Render Environment 
 semiGround :: IORef LispVal -> IO LispVal
 semiGround val = do
     grounded <- readIORef val
@@ -31,7 +31,7 @@ renderEnv envRef = do
     val <- getVar envRef "list"
     let (keys, vals) = unzip env in return $ (map (\k -> String k) keys)
 
--- | # Set variable
+-- ## Set variable
 setVar :: Env -> String -> LispVal -> IOThrowsError LispVal
 setVar envRef var value = do env <- liftIO $ readIORef envRef
                              maybe (throwError $ UnboundVar "Setting an unbound variable" var) 
@@ -39,7 +39,7 @@ setVar envRef var value = do env <- liftIO $ readIORef envRef
                                    (lookup var env)
                              return value
 
--- | # Define variable
+-- ## Define variable
 defineVar :: Env -> String -> LispVal -> IOThrowsError LispVal
 defineVar envRef var value = do 
     alreadyDefined <- liftIO $ isBound envRef var 
@@ -51,7 +51,7 @@ defineVar envRef var value = do
           writeIORef envRef ((var, valueRef) : env)
           return value
 
--- | # Bind a series of variables
+-- ## Bind a series of variables
 bindVars :: Env -> [(String, LispVal)] -> IO Env
 bindVars envRef bindings = readIORef envRef >>= extendEnv bindings >>= newIORef
     where extendEnv bindings env = liftM (++ env) (mapM addBinding bindings)

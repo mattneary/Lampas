@@ -6,7 +6,7 @@ import Control.Monad.Error
 import System.IO
 import Data.IORef
 
--- | # Environment
+-- ## Environment
 type Env = IORef [(String, IORef LispVal)]
 type IOThrowsError = ErrorT LispError IO
 
@@ -20,7 +20,7 @@ liftThrows (Right val) = return val
 runIOThrows :: IOThrowsError String -> IO String
 runIOThrows action = runErrorT (trapError action) >>= return . extractValue   
 
--- | # Data Type Interfaces
+-- ## Data Type Interfaces
 instance Show LispVal where show = showVal
 data LispVal = Atom String
               | List [LispVal]
@@ -34,7 +34,7 @@ data LispVal = Atom String
               | Func {params :: [String], vararg :: (Maybe String), 
                                     body :: [LispVal], closure :: Env}
                                     
--- | # Type Renderers for REPL
+-- ## Type Renderers for REPL
 unwordsList :: [LispVal] -> String
 unwordsList = unwords . map showVal
 
@@ -55,7 +55,7 @@ showVal (Func {params = args, vararg = varargs, body = body, closure = env}) =
 showVal (Port _) = "<IO port>"
 showVal (IOFunc _) = "<IO primitive>"                                     
                                     
--- | # Error Handling
+-- ## Error Handling
 instance Show LispError where show = showError
 data LispError = NumArgs Integer [LispVal]
                | TypeMismatch String LispVal
@@ -80,7 +80,7 @@ trapError action = catchError action (return . show)
 extractValue :: ThrowsError a -> a
 extractValue (Right val) = val
 
--- | # Inherit from Haskell Error
+-- ## Inherit from Haskell Error
 instance Error LispError where
      noMsg = Default "An error has occurred"
      strMsg = Default

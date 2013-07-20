@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>IO.hs</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, target-densitydpi=160dpi, initial-scale=1.0; maximum-scale=1.0; user-scalable=0;">
+  <link rel="stylesheet" media="all" href="docco.css" />
+</head>
+<body>
+  <div id="container">
+    <div id="background"></div>
+    
+      <ul id="jump_to">
+        <li>
+          <a class="large" href="javascript:void(0);">Jump To &hellip;</a>
+          <a class="small" href="javascript:void(0);">+</a>
+          <div id="jump_wrapper">
+          <div id="jump_page">
+            
+              
+              <a class="source" href="Eval.html">
+                Eval.hs
+              </a>
+            
+              
+              <a class="source" href="IO.html">
+                IO.hs
+              </a>
+            
+              
+              <a class="source" href="Interfaces.html">
+                Interfaces.hs
+              </a>
+            
+              
+              <a class="source" href="Main.html">
+                Main.hs
+              </a>
+            
+              
+              <a class="source" href="Parser.html">
+                Parser.hs
+              </a>
+            
+              
+              <a class="source" href="Primitives.html">
+                Primitives.hs
+              </a>
+            
+              
+              <a class="source" href="Refs.html">
+                Refs.hs
+              </a>
+            
+              
+              <a class="source" href="Types.html">
+                Types.hs
+              </a>
+            
+          </div>
+        </li>
+      </ul>
+    
+    <ul class="sections">
+        
+          <li id="title">
+              <div class="annotation">
+                  <h1>IO.hs</h1>
+              </div>
+          </li>
+        
+        
+        
+        <li id="section-1">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-1">&#182;</a>
+              </div>
+              
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="module"><span class="keyword">module</span> IO <span class="keyword">where</span></span>
+
+<span class="import"><span class="keyword">import</span> Text.ParserCombinators.Parsec</span>
+<span class="import"><span class="keyword">import</span> System.Environment</span>
+<span class="import"><span class="keyword">import</span> Control.Monad</span>
+<span class="import"><span class="keyword">import</span> Control.Monad.Error</span>
+<span class="import"><span class="keyword">import</span> System.IO</span>
+<span class="import"><span class="keyword">import</span> Data.IORef</span>
+
+<span class="import"><span class="keyword">import</span> Types</span>
+<span class="import"><span class="keyword">import</span> Refs</span>
+<span class="import"><span class="keyword">import</span> Parser</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-2">
+            <div class="annotation">
+              
+              <div class="pilwrap for-h2">
+                <a class="pilcrow" href="#section-2">&#182;</a>
+              </div>
+              <h2>Interfaces to IO Ports</h2>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="title">makePort</span> :: <span class="type">IOMode</span> -&gt; [<span class="type">LispVal</span>] -&gt; <span class="type">IOThrowsError</span> <span class="type">LispVal</span>
+<span class="title">makePort</span> mode [<span class="type">String</span> filename] = liftM <span class="type">Port</span> $ liftIO $ openFile filename mode            
+
+<span class="title">closePort</span> :: [<span class="type">LispVal</span>] -&gt; <span class="type">IOThrowsError</span> <span class="type">LispVal</span>
+<span class="title">closePort</span> [<span class="type">Port</span> port] = liftIO $ hClose port &gt;&gt; (return $ <span class="type">Bool</span> <span class="type">True</span>)
+<span class="title">closePort</span> _ = return $ <span class="type">Bool</span> <span class="type">False</span>
+
+<span class="title">writeProc</span> :: [<span class="type">LispVal</span>] -&gt; <span class="type">IOThrowsError</span> <span class="type">LispVal</span>
+<span class="title">writeProc</span> [obj] = writeProc [obj, <span class="type">Port</span> stdout]
+<span class="title">writeProc</span> [obj, <span class="type">Port</span> port] = liftIO $ hPrint port obj &gt;&gt; (return $ <span class="type">Bool</span> <span class="type">True</span>)
+
+<span class="title">readContents</span> :: [<span class="type">LispVal</span>] -&gt; <span class="type">IOThrowsError</span> <span class="type">LispVal</span>
+<span class="title">readContents</span> [<span class="type">String</span> filename] = liftM <span class="type">String</span> $ liftIO $ readFile filename
+
+<span class="title">readProc</span> :: [<span class="type">LispVal</span>] -&gt; <span class="type">IOThrowsError</span> <span class="type">LispVal</span>
+<span class="title">readProc</span> [] = readProc [<span class="type">Port</span> stdin]
+<span class="title">readProc</span> [<span class="type">Port</span> port] = (liftIO $ hGetLine port) &gt;&gt;= liftThrows . readExpr
+
+<span class="title">load</span> :: <span class="type">String</span> -&gt; <span class="type">IOThrowsError</span> [<span class="type">LispVal</span>]
+<span class="title">load</span> filename = (liftIO $ readFile filename) &gt;&gt;= liftThrows . readExprList
+
+<span class="title">readAll</span> :: [<span class="type">LispVal</span>] -&gt; <span class="type">IOThrowsError</span> <span class="type">LispVal</span>
+<span class="title">readAll</span> [<span class="type">String</span> filename] = liftM <span class="type">List</span> $ load filename
+
+<span class="title">readExpr</span> = readOrThrow parseExpr
+<span class="title">readExprList</span> = readOrThrow (endBy parseExpr spaces)
+
+<span class="title">readOrThrow</span> :: <span class="type">Parser</span> a -&gt; <span class="type">String</span> -&gt; <span class="type">ThrowsError</span> a
+<span class="title">readOrThrow</span> parser input = <span class="keyword">case</span> parse parser <span class="string">"lisp"</span> input <span class="keyword">of</span>
+    <span class="type">Left</span> err -&gt; throwError $ <span class="type">Parser</span> err
+    <span class="type">Right</span> val -&gt; return val</pre></div></div>
+            
+        </li>
+        
+    </ul>
+  </div>
+</body>
+</html>

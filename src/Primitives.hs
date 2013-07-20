@@ -13,7 +13,7 @@ import Interfaces
 import Refs
 import Eval
 
--- | # Primitive Operations
+-- ## Primitive Operations
 primitives :: [(String, [LispVal] -> ThrowsError LispVal)]
 primitives = [("+", numericBinop (+)),
               ("-", numericBinop (-)),
@@ -58,7 +58,7 @@ ioPrimitives = [("apply", applyProc),
                 ("eval", evil),
                 ("evalenv", evilenv)]          
            
--- | # Expose a User-Land Eval Function
+-- ## Expose a User-Land Eval Function
 evil :: [LispVal] -> IOThrowsError LispVal
 evil [exprs] = do
     env <- liftIO $ primitiveBindings >>= flip bindVars [] 
@@ -69,13 +69,13 @@ evilenv [List defs, exprs] = do
     env <- liftIO $ nullEnv >>= flip bindVars (map (\(List [String key, val]) -> (key, val)) defs)
     eval env exprs
                 
--- | # Bind Primitives to Environment
+-- ## Bind Primitives to Environment
 primitiveBindings :: IO Env
 primitiveBindings = nullEnv >>= (flip bindVars $ map (makeFunc IOFunc) ioPrimitives
                                               ++ map (makeFunc PrimitiveFunc) primitives)
     where makeFunc constructor (var, func) = (var, constructor func)                   
                 
--- | # Elementary Functions
+-- ## Elementary Functions
 car :: [LispVal] -> ThrowsError LispVal
 car [List (x : xs)] = return x
 car [DottedList (x : xs) _] = return x
@@ -124,8 +124,8 @@ atom [Number val] = return $ Bool True
 atom [String val] = return $ Bool True
 atom other = return $ Bool False
 
--- | # Data-Type Conversions
--- | ## string->list
+-- ## Data-Type Conversions
+-- ### string->list
 toStrings :: String -> [LispVal]
 toStrings [] = []
 toStrings (x:xs) = (String [x]) : (toStrings xs)
@@ -134,13 +134,13 @@ toCharList :: [LispVal] -> ThrowsError LispVal
 toCharList args = do str <- unpackStr $ args !! 0
                      return $ List $ toStrings str
                      
--- | *used internally to allow for recursion (avoid monad mess)*
+-- *used internally to allow for recursion (avoid monad mess)*
 fromCharList' :: [LispVal] -> LispVal
 fromCharList' [List (String first : rest)] = String (first ++ ((unpackStr' . fromCharList') rest))
 fromCharList' ((String first) : rest) = String (first ++ ((unpackStr' . fromCharList') rest))
 fromCharList' [] = String ""
 fromCharList' notList = String ""
 
--- | ## list->string
+-- ### list->string
 fromCharList :: [LispVal] -> ThrowsError LispVal
 fromCharList x = return $ fromCharList' x 

@@ -11,7 +11,7 @@ import Types
 import Refs
 import IO
 
--- | # Binary Operations
+-- ## Binary Operations
 numericBinop :: (Integer -> Integer -> Integer) -> [LispVal] -> ThrowsError LispVal
 numericBinop op singleVal@[_] = throwError $ NumArgs 2 singleVal
 numericBinop op params = mapM unpackNum params >>= return . Number . foldl1 op
@@ -28,9 +28,9 @@ strBoolBinop = boolBinop unpackStr
 boolBoolBinop = boolBinop unpackBool
 
 
--- | # Unpack Numbers/Strings/Booleans/Equivalency
+-- ## Unpack Numbers/Strings/Booleans/Equivalency
 data Unpacker = forall a. Eq a => AnyUnpacker (LispVal -> ThrowsError a)
--- | *requires `-XExistentialQuantification`*
+-- *requires `-XExistentialQuantification`*
 
 unpackNum :: LispVal -> ThrowsError Integer
 unpackNum (Number n) = return n

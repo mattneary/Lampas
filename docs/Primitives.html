@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>Primitives.hs</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, target-densitydpi=160dpi, initial-scale=1.0; maximum-scale=1.0; user-scalable=0;">
+  <link rel="stylesheet" media="all" href="docco.css" />
+</head>
+<body>
+  <div id="container">
+    <div id="background"></div>
+    
+      <ul id="jump_to">
+        <li>
+          <a class="large" href="javascript:void(0);">Jump To &hellip;</a>
+          <a class="small" href="javascript:void(0);">+</a>
+          <div id="jump_wrapper">
+          <div id="jump_page">
+            
+              
+              <a class="source" href="Eval.html">
+                Eval.hs
+              </a>
+            
+              
+              <a class="source" href="IO.html">
+                IO.hs
+              </a>
+            
+              
+              <a class="source" href="Interfaces.html">
+                Interfaces.hs
+              </a>
+            
+              
+              <a class="source" href="Main.html">
+                Main.hs
+              </a>
+            
+              
+              <a class="source" href="Parser.html">
+                Parser.hs
+              </a>
+            
+              
+              <a class="source" href="Primitives.html">
+                Primitives.hs
+              </a>
+            
+              
+              <a class="source" href="Refs.html">
+                Refs.hs
+              </a>
+            
+              
+              <a class="source" href="Types.html">
+                Types.hs
+              </a>
+            
+          </div>
+        </li>
+      </ul>
+    
+    <ul class="sections">
+        
+          <li id="title">
+              <div class="annotation">
+                  <h1>Primitives.hs</h1>
+              </div>
+          </li>
+        
+        
+        
+        <li id="section-1">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-1">&#182;</a>
+              </div>
+              
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="module"><span class="keyword">module</span> Primitives <span class="keyword">where</span></span>
+
+<span class="import"><span class="keyword">import</span> Text.ParserCombinators.Parsec</span>
+<span class="import"><span class="keyword">import</span> System.Environment</span>
+<span class="import"><span class="keyword">import</span> Control.Monad</span>
+<span class="import"><span class="keyword">import</span> Control.Monad.Error</span>
+<span class="import"><span class="keyword">import</span> System.IO</span>
+<span class="import"><span class="keyword">import</span> Data.IORef</span>
+
+<span class="import"><span class="keyword">import</span> IO</span>
+<span class="import"><span class="keyword">import</span> Types</span>
+<span class="import"><span class="keyword">import</span> Interfaces</span>
+<span class="import"><span class="keyword">import</span> Refs</span>
+<span class="import"><span class="keyword">import</span> Eval</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-2">
+            <div class="annotation">
+              
+              <div class="pilwrap for-h2">
+                <a class="pilcrow" href="#section-2">&#182;</a>
+              </div>
+              <h2>Primitive Operations</h2>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="title">primitives</span> :: [(<span class="type">String</span>, [<span class="type">LispVal</span>] -&gt; <span class="type">ThrowsError</span> <span class="type">LispVal</span>)]
+<span class="title">primitives</span> = [(<span class="string">"+"</span>, numericBinop (+)),
+              (<span class="string">"-"</span>, numericBinop (-)),
+              (<span class="string">"*"</span>, numericBinop (*)),
+              (<span class="string">"/"</span>, numericBinop div),
+              (<span class="string">"="</span>, numBoolBinop (==)),
+			  (<span class="string">"&lt;"</span>, numBoolBinop (&lt;)),
+  			  (<span class="string">"&gt;"</span>, numBoolBinop (&gt;)),
+			  (<span class="string">"/="</span>, numBoolBinop (/=)),
+			  (<span class="string">"&gt;="</span>, numBoolBinop (&gt;=)),
+			  (<span class="string">"&lt;="</span>, numBoolBinop (&lt;=)),
+			  (<span class="string">"&amp;&amp;"</span>, boolBoolBinop (&amp;&amp;)),
+			  (<span class="string">"_or"</span>, boolBoolBinop (||)),
+			  (<span class="string">"string=?"</span>, strBoolBinop (==)),
+			  (<span class="string">"string&lt;?"</span>, strBoolBinop (&lt;)),
+			  (<span class="string">"string&gt;?"</span>, strBoolBinop (&gt;)),
+			  (<span class="string">"string&lt;=?"</span>, strBoolBinop (&lt;=)),
+			  (<span class="string">"string&gt;=?"</span>, strBoolBinop (&gt;=)),
+			  (<span class="string">"string-&gt;list"</span>, toCharList),
+			  (<span class="string">"list-&gt;string"</span>, fromCharList),
+              (<span class="string">"mod"</span>, numericBinop mod),
+              (<span class="string">"quotient"</span>, numericBinop quot),
+              (<span class="string">"remainder"</span>, numericBinop rem),
+              (<span class="string">"car"</span>, car),
+              (<span class="string">"cdr"</span>, cdr),
+              (<span class="string">"cons"</span>, cons),
+              (<span class="string">"eq?"</span>, eqv),
+              (<span class="string">"eqv?"</span>, eqv),
+              (<span class="string">"equal?"</span>, equal),
+              (<span class="string">"atom?"</span>, atom)]             
+
+<span class="title">ioPrimitives</span> :: [(<span class="type">String</span>, [<span class="type">LispVal</span>] -&gt; <span class="type">IOThrowsError</span> <span class="type">LispVal</span>)]
+<span class="title">ioPrimitives</span> = [(<span class="string">"apply"</span>, applyProc),
+                (<span class="string">"open-input-file"</span>, makePort <span class="type">ReadMode</span>),
+                (<span class="string">"open-output-file"</span>, makePort <span class="type">WriteMode</span>),
+                (<span class="string">"close-input-port"</span>, closePort),
+                (<span class="string">"close-output-port"</span>, closePort),
+                (<span class="string">"read"</span>, readProc),
+                (<span class="string">"write"</span>, writeProc),
+                (<span class="string">"read-contents"</span>, readContents),
+                (<span class="string">"read-all"</span>, readAll),
+                (<span class="string">"eval"</span>, evil),
+                (<span class="string">"evalenv"</span>, evilenv)]</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-3">
+            <div class="annotation">
+              
+              <div class="pilwrap for-h2">
+                <a class="pilcrow" href="#section-3">&#182;</a>
+              </div>
+              <h2>Expose a User-Land Eval Function</h2>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="title">evil</span> :: [<span class="type">LispVal</span>] -&gt; <span class="type">IOThrowsError</span> <span class="type">LispVal</span>
+<span class="title">evil</span> [exprs] = <span class="keyword">do</span>
+    env &lt;- liftIO $ primitiveBindings &gt;&gt;= flip bindVars [] 
+    eval env exprs
+    
+<span class="title">evilenv</span> :: [<span class="type">LispVal</span>] -&gt; <span class="type">IOThrowsError</span> <span class="type">LispVal</span>
+<span class="title">evilenv</span> [<span class="type">List</span> defs, exprs] = <span class="keyword">do</span>
+    env &lt;- liftIO $ nullEnv &gt;&gt;= flip bindVars (map (\(<span class="type">List</span> [<span class="type">String</span> key, val]) -&gt; (key, val)) defs)
+    eval env exprs</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-4">
+            <div class="annotation">
+              
+              <div class="pilwrap for-h2">
+                <a class="pilcrow" href="#section-4">&#182;</a>
+              </div>
+              <h2>Bind Primitives to Environment</h2>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="title">primitiveBindings</span> :: <span class="type">IO</span> <span class="type">Env</span>
+<span class="title">primitiveBindings</span> = nullEnv &gt;&gt;= (flip bindVars $ map (makeFunc <span class="type">IOFunc</span>) ioPrimitives
+                                              ++ map (makeFunc <span class="type">PrimitiveFunc</span>) primitives)
+    <span class="keyword">where</span> makeFunc constructor (var, func) = (var, constructor func)</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-5">
+            <div class="annotation">
+              
+              <div class="pilwrap for-h2">
+                <a class="pilcrow" href="#section-5">&#182;</a>
+              </div>
+              <h2>Elementary Functions</h2>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="title">car</span> :: [<span class="type">LispVal</span>] -&gt; <span class="type">ThrowsError</span> <span class="type">LispVal</span>
+<span class="title">car</span> [<span class="type">List</span> (x : xs)] = return x
+<span class="title">car</span> [<span class="type">DottedList</span> (x : xs) _] = return x
+<span class="title">car</span> [badArg] = throwError $ <span class="type">TypeMismatch</span> <span class="string">"pair"</span> badArg
+<span class="title">car</span> badArgList = throwError $ <span class="type">NumArgs</span> <span class="number">1</span> badArgList   
+
+<span class="title">cdr</span> :: [<span class="type">LispVal</span>] -&gt; <span class="type">ThrowsError</span> <span class="type">LispVal</span>
+<span class="title">cdr</span> [<span class="type">List</span> (x : xs)] = return $ <span class="type">List</span> xs
+<span class="title">cdr</span> [<span class="type">DottedList</span> [_] x] = return x
+<span class="title">cdr</span> [<span class="type">DottedList</span> (_ : xs) x] = return $ <span class="type">DottedList</span> xs x
+<span class="title">cdr</span> [badArg] = throwError $ <span class="type">TypeMismatch</span> <span class="string">"pair"</span> badArg
+<span class="title">cdr</span> badArgList = throwError $ <span class="type">NumArgs</span> <span class="number">1</span> badArgList
+
+<span class="title">cons</span> :: [<span class="type">LispVal</span>] -&gt; <span class="type">ThrowsError</span> <span class="type">LispVal</span>
+<span class="title">cons</span> [x1, <span class="type">List</span> []] = return $ <span class="type">List</span> [x1]
+<span class="title">cons</span> [x, <span class="type">List</span> xs] = return $ <span class="type">List</span> $ x : xs
+<span class="title">cons</span> [x, <span class="type">DottedList</span> xs xlast] = return $ <span class="type">DottedList</span> (x : xs) xlast
+<span class="title">cons</span> [x1, x2] = return $ <span class="type">DottedList</span> [x1] x2
+<span class="title">cons</span> badArgList = throwError $ <span class="type">NumArgs</span> <span class="number">2</span> badArgList
+
+<span class="title">eqv</span> :: [<span class="type">LispVal</span>] -&gt; <span class="type">ThrowsError</span> <span class="type">LispVal</span>
+<span class="title">eqv</span> [(<span class="type">Bool</span> arg1), (<span class="type">Bool</span> arg2)] = return $ <span class="type">Bool</span> $ arg1 == arg2
+<span class="title">eqv</span> [(<span class="type">Number</span> arg1), (<span class="type">Number</span> arg2)] = return $ <span class="type">Bool</span> $ arg1 == arg2
+<span class="title">eqv</span> [(<span class="type">String</span> arg1), (<span class="type">String</span> arg2)] = return $ <span class="type">Bool</span> $ arg1 == arg2
+<span class="title">eqv</span> [(<span class="type">Atom</span> arg1), (<span class="type">Atom</span> arg2)] = return $ <span class="type">Bool</span> $ arg1 == arg2
+<span class="title">eqv</span> [(<span class="type">DottedList</span> xs x), (<span class="type">DottedList</span> ys y)] = eqv [<span class="type">List</span> $ xs ++ [x], <span class="type">List</span> $ ys ++ [y]]
+<span class="title">eqv</span> [(<span class="type">List</span> arg1), (<span class="type">List</span> arg2)] = return $ <span class="type">Bool</span> $ (length arg1 == length arg2) &amp;&amp; 
+                                                    (all eqvPair $ zip arg1 arg2)
+    <span class="keyword">where</span> eqvPair (x1, x2) = <span class="keyword">case</span> eqv [x1, x2] <span class="keyword">of</span>
+                               <span class="type">Left</span> err -&gt; <span class="type">False</span>
+                               <span class="type">Right</span> (<span class="type">Bool</span> val) -&gt; val
+<span class="title">eqv</span> [_, _] = return $ <span class="type">Bool</span> <span class="type">False</span>
+<span class="title">eqv</span> badArgList = throwError $ <span class="type">NumArgs</span> <span class="number">2</span> badArgList                
+
+<span class="title">equal</span> :: [<span class="type">LispVal</span>] -&gt; <span class="type">ThrowsError</span> <span class="type">LispVal</span>
+<span class="title">equal</span> [arg1, arg2] = <span class="keyword">do</span>
+    primitiveEquals &lt;- liftM or $ mapM (unpackEquals arg1 arg2) 
+                      [<span class="type">AnyUnpacker</span> unpackNum, <span class="type">AnyUnpacker</span> unpackStr, <span class="type">AnyUnpacker</span> unpackBool]
+    eqvEquals &lt;- eqv [arg1, arg2]
+    return $ <span class="type">Bool</span> $ (primitiveEquals || <span class="keyword">let</span> (<span class="type">Bool</span> x) = eqvEquals <span class="keyword">in</span> x)
+<span class="title">equal</span> badArgList = throwError $ <span class="type">NumArgs</span> <span class="number">2</span> badArgList  
+
+<span class="title">atom</span> :: [<span class="type">LispVal</span>] -&gt; <span class="type">ThrowsError</span> <span class="type">LispVal</span>
+<span class="title">atom</span> [<span class="type">Atom</span> val] = return $ <span class="type">Bool</span> <span class="type">True</span>
+<span class="title">atom</span> [<span class="type">Number</span> val] = return $ <span class="type">Bool</span> <span class="type">True</span>
+<span class="title">atom</span> [<span class="type">String</span> val] = return $ <span class="type">Bool</span> <span class="type">True</span>
+<span class="title">atom</span> other = return $ <span class="type">Bool</span> <span class="type">False</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-6">
+            <div class="annotation">
+              
+              <div class="pilwrap for-h2">
+                <a class="pilcrow" href="#section-6">&#182;</a>
+              </div>
+              <h2>Data-Type Conversions</h2>
+<h3>string-&gt;list</h3>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="title">toStrings</span> :: <span class="type">String</span> -&gt; [<span class="type">LispVal</span>]
+<span class="title">toStrings</span> [] = []
+<span class="title">toStrings</span> (x:xs) = (<span class="type">String</span> [x]) : (toStrings xs)
+
+<span class="title">toCharList</span> :: [<span class="type">LispVal</span>] -&gt; <span class="type">ThrowsError</span> <span class="type">LispVal</span>
+<span class="title">toCharList</span> args = <span class="keyword">do</span> str &lt;- unpackStr $ args !! <span class="number">0</span>
+                     return $ <span class="type">List</span> $ toStrings str</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-7">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-7">&#182;</a>
+              </div>
+              <p><em>used internally to allow for recursion (avoid monad mess)</em></p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="title">fromCharList'</span> :: [<span class="type">LispVal</span>] -&gt; <span class="type">LispVal</span>
+<span class="title">fromCharList'</span> [<span class="type">List</span> (<span class="type">String</span> first : rest)] = <span class="type">String</span> (first ++ ((unpackStr' . fromCharList') rest))
+<span class="title">fromCharList'</span> ((<span class="type">String</span> first) : rest) = <span class="type">String</span> (first ++ ((unpackStr' . fromCharList') rest))
+<span class="title">fromCharList'</span> [] = <span class="type">String</span> <span class="string">""</span>
+<span class="title">fromCharList'</span> notList = <span class="type">String</span> <span class="string">""</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-8">
+            <div class="annotation">
+              
+              <div class="pilwrap for-h3">
+                <a class="pilcrow" href="#section-8">&#182;</a>
+              </div>
+              <h3>list-&gt;string</h3>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="title">fromCharList</span> :: [<span class="type">LispVal</span>] -&gt; <span class="type">ThrowsError</span> <span class="type">LispVal</span>
+<span class="title">fromCharList</span> x = return $ fromCharList' x</pre></div></div>
+            
+        </li>
+        
+    </ul>
+  </div>
+</body>
+</html>

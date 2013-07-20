@@ -11,7 +11,7 @@ import Types
 import Refs
 import Parser
 
--- | # Interfaces to IO Ports
+-- ## Interfaces to IO Ports
 makePort :: IOMode -> [LispVal] -> IOThrowsError LispVal
 makePort mode [String filename] = liftM Port $ liftIO $ openFile filename mode            
 

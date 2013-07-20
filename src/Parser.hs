@@ -9,11 +9,11 @@ import Data.IORef
 
 import Types
 
--- | # Symbol Class of Characters
+-- ## Symbol Class of Characters
 symbol :: Parser Char
 symbol = oneOf "!#$%&*+-/:<=>?@^_~"
 
--- | # Parsing
+-- ## Parsing
 parseExpr :: Parser LispVal
 parseExpr = parseAtom
          <|> parseString
@@ -28,7 +28,7 @@ parseExpr = parseAtom
                 char ')'
                 return x
 
--- | # Parse Atom/String/Number/List/Quoted/Vector/Lambda
+-- ## Parse Atom/String/Number/List/Quoted/Vector/Lambda
 parseAtom :: Parser LispVal
 parseAtom = do 
                 first <- letter <|> symbol
