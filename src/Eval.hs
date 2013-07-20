@@ -33,6 +33,8 @@ applyProc [func, List args] = apply func args
 applyProc (func : args) = apply func args            
 
 -- | # Macros
+
+-- | ## Check for Rewriters of Expressions
 hasRewrite :: LispVal -> Env -> IOThrowsError Bool
 hasRewrite (Atom name) env = liftIO $ isBound env (name ++ "-syntax")
 hasRewrite badAtom env = liftIO $ return False
@@ -41,26 +43,18 @@ hasEnvRewrite :: LispVal -> Env -> IOThrowsError Bool
 hasEnvRewrite (Atom name) env = liftIO $ isBound env (name ++ "-syntax-env")
 hasEnvRewrite badAtom env = liftIO $ return False
 
-positOnEnv (Func params varargs body closure) env = Func params varargs body env
-
+-- | ## Macro Rewriters
 rewrite env (Atom name) args = do
     func <- getVar env (name ++ "-syntax")    
     applied <- apply func args
     eval env applied
     
-stripEnv env = renderEnv env
-    
-rewritePosited env (Atom name) args = do
+rewriteEnv env (Atom name) args = do
     func <- getVar env (name ++ "-syntax-env")    
-    renderedEnv <- stripEnv env
+    renderedEnv <- renderEnv env
     renderedVals <- mapM (\(String val) -> getVar env val) renderedEnv
     applied <- apply func ((List (map (\(key, val) -> List [key, val]) (zip renderedEnv renderedVals))):args)
     eval env applied    
-
-evalfun env (List (function : args)) = do 
-    func <- eval env function
-    argVals <- mapM (eval env) args
-    apply func argVals
     
 -- | # Quasiquotations
 evalCommas (List [Atom "unquote", val]) = val
@@ -110,9 +104,14 @@ eval env val@(List (function : args)) = do
     if hadRewrite 
       then rewrite env function args 
       else if hadEnvRewrite
-        then rewritePosited env function args
+        then rewriteEnv env function args
         else evalfun env val
 eval env badForm = throwError $ BadSpecialForm "Unrecognized special form" badForm
+
+evalfun env (List (function : args)) = do 
+    func <- eval env function
+    argVals <- mapM (eval env) args
+    apply func argVals
 
 -- | # Function Constructors
 makeFunc varargs env params body = return $ Func (map showVal params) varargs body env

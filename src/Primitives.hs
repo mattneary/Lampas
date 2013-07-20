@@ -55,15 +55,19 @@ ioPrimitives = [("apply", applyProc),
                 ("write", writeProc),
                 ("read-contents", readContents),
                 ("read-all", readAll),
-                ("eval", evil)]          
+                ("eval", evil),
+                ("evalenv", evilenv)]          
            
 -- | # Expose a User-Land Eval Function
-evalFlip :: LispVal -> Env -> IOThrowsError LispVal                
-evalFlip expr env = eval env expr
 evil :: [LispVal] -> IOThrowsError LispVal
 evil [exprs] = do
     env <- liftIO $ primitiveBindings >>= flip bindVars [] 
-    evalFlip exprs env
+    eval env exprs
+    
+evilenv :: [LispVal] -> IOThrowsError LispVal
+evilenv [List defs, exprs] = do
+    env <- liftIO $ nullEnv >>= flip bindVars (map (\(List [String key, val]) -> (key, val)) defs)
+    eval env exprs
                 
 -- | # Bind Primitives to Environment
 primitiveBindings :: IO Env

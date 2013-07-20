@@ -70,7 +70,15 @@
 (print ''third)
 
 "  environment exposed to macros
-"" TODO: make eval capable of receiving an env
 "
 (defenvmacro (readmac env x) `(quote ,(car (reverse env))))
+(write "# Exposed Environments (= (`atom?` <primitive>))")
 (write (readmac 1))
+
+" Evaluation with Arbitrary Environment
+"
+(defenvmacro 
+  (enveval env x) 
+  (evalenv env x))
+(write "# Env-Eval/Context-Keeping Macros (= 5)")  
+({|x| (enveval x)} 5)
