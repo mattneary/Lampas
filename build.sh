@@ -1,3 +1,4 @@
+docco src/*.hs
 cd src
 ghc Main.hs -XExistentialQuantification
 rm *.hi

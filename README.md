@@ -57,6 +57,19 @@ Or, if on a Unix machine, run the build script which will compile, test, and cle
 $ ./build.sh
 ```
 
+Build Script
+------------
+For the build script to generate documentation, it requires node.js and docco. However, if this aspect is removed it merely requires GHC.
+
+The build script generates documentation, compiles all sources, removes intermediary compilation files, and then runs the test suite. All test results are of the following form in the terminal.
+
+```scheme
+"# Output (= `Hello`)"
+"Hello"
+```
+
+Where the asserted value is named with appropriate value in parenthesis. Tests serve to prevent unknown breaking of features.
+
 Usage
 -----
 Then run the interpreter either with a program as a parameter or individually to fire up a REPL.
