@@ -81,4 +81,10 @@
   (enveval env x) 
   (evalenv env x))
 (write "# Env-Eval/Context-Keeping Macros (= 5)")  
-({|x| (enveval x)} 5)
+(write ({|x| (enveval x)} 5))
+
+" Context Aware Continuations
+"
+(write "# Context-Keeping Continuations (= 5 \ 6)")  
+({|x| (begincc (write (call/cc {|cc| (set! print cc) x})))} 5)
+(print '(+ x 1))

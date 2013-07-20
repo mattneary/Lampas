@@ -23,10 +23,15 @@ Continuations were defined purely with macros. The general workflow of a continu
 "
 
 (define print 5)    
-(begincc (write (call/cc {|cc| (set! print cc) 'initial})))
-(print ''second)
-"  => initial
-"" => second
+((lambda 
+  (x) 
+  (begincc 
+    (write 
+      (call/cc {|cc| (set! print cc) x}))))
+5)
+(print '(+ x 1))
+"  => 5
+"" => 6
 "
 ```
 
