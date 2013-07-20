@@ -36,6 +36,8 @@ See examples of syntax in `src/test.lampas`.
 
 For macros, after beginning with a `define-rewriter` approach, wherein macros received each S-Expression in which they were embedded as arguments, I instead opted for `defmacro`. `defmacro` parses components as arguments, but the full power of `define-rewriter` could be easily rebuilt. My implementation of macros was pretty straight-forward, each `defmacro` defined a function in the usual environment with a distinct name. From there, each S-Expression is checked for a corresponding macro name. If one is found, the tail of the S-Expression is passed as argument to the defined function. This method keeps macros hygienic. This implementation may be improper, or perhaps it has too much overhead, but it was very easily implemented.
 
+Another type of macro is in the works, called `defenvmacro`. `defenvmacro` receives the environment, that is, the entire context of the passed expression, as a parameter. This gives the full power of the interpreter to macros, although there is no convenient `env` receiving `eval` function just yet. That function is coming and once it is implemented continuations will be given full context simply by passing one more argument to the eval function (and changing the macro type).
+
 Compilation
 -----------
 Compile the source using GHC and the Existential flag.
