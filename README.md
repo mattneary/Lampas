@@ -81,7 +81,7 @@ Todo
 - `,@` unquote-splicing
 - `case` statements
 - `currying`
-- `continuations` - an early implementation is done (`env`-free). To clean it up (remove `begincc`) I will need to add the option of a global macro, one called on every S-Expression.
+- `continuations` - the last component of continuations that needs to be implemented is continuation of the stack, rather than the current mere re-evaluation of the expression. I think as an intermediary implementation I'll have `begincc` accept a variable number of expressions over which it will operate. Values are also immutable right now! The only solution I foresee existing for this is to overwrite the `set!`, `define`, etc. functions when performing the `evalenv`; this should not be too hard.
 - `numerical tower`
 
 References
