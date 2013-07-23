@@ -98,6 +98,10 @@
         head) 
       (fn alist) 
       (map {|part| (submacro head fn part)} alist))))
+     
+" the plan of attack to multi-expression `begincc`
+"     
+(defmacro (altbegincc . exprs) `(,(concat '(lambda (_)) exprs) 0))
       
 " an early implementation of continuations
 "      
@@ -110,5 +114,10 @@
       `(,(cadr part) 
       (lambda 
         (val) 
-        (evalenv (quote ,env) (submacro 'call/cc {|_| val} (quote ,expr))))))
+        (evalenv 
+          (quote ,env) 
+          (submacro 
+            'call/cc 
+            {|_| val} 
+            (quote ,expr))))))
     expr))

@@ -11,7 +11,7 @@ import Types
 
 -- ## Symbol Class of Characters
 symbol :: Parser Char
-symbol = oneOf "!#$%&*+-/:<=>?@^_~"
+symbol = oneOf "!#$%&*+-/:<=>?^_~@"
 
 -- ## Parsing
 -- The main parser, `parseExpr` attempts parsing of the various expression types.
@@ -22,7 +22,7 @@ parseExpr = parseAtom
          <|> parseQuoted
          <|> parseVector
          <|> parseLambda  
-         <|> parseUnQuoted
+         <|> parseUnQuoted         
          <|> parseQuasiQuoted       
          <|> do char '('
                 x <- try parseList <|> parseDottedList
@@ -92,7 +92,7 @@ parseUnQuoted :: Parser LispVal
 parseUnQuoted = do
     char ','
     x <- parseExpr
-    return $ List [Atom "unquote", x]             
+    return $ List [Atom "unquote", x]                       
        
 -- Parses the lambda shorthand, `{|x| ...}`.
 parseLambda :: Parser LispVal
