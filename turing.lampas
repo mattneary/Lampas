@@ -1,0 +1,43 @@
+(load "src/Prelude.lampas")
+
+(define index 0)
+(define rules '(((A 0) (1 R H))))
+(define state 'A)
+
+(define
+  (move index motion) 
+  (if 
+    (eqv? motion 'R)
+    (+ 1 index)
+    (- 1 index)))
+
+(define 
+  (write-rule tape index rule) 
+  (if 
+    (null? tape) 
+    tape 
+    (if 
+      (eqv? index 0) 
+      (cons (car rule) (cdr tape))
+      (cons (car tape) (write-rule (cdr tape) (- index 1) rule)))))
+
+(define 
+  (iterate-rule rule rules index tape)
+  (iterate 
+    (move index (cadr rule))
+    rules
+    (caddr rule)
+    (write-rule tape index rule)))
+
+(define
+  (iterate index rules state tape) 
+  (if 
+    (eqv? state 'H)
+    tape
+    (iterate-rule 
+      (cadr (assoc `(,state ,index) rules))
+      rules
+      index
+      tape)))
+
+(write (iterate index rules state '(0 0 0)))
