@@ -55,7 +55,9 @@
 	   ((eqv? (car expr) 'pop) (let args (assocv 'args env) (eval exprs (set 'args (cdr args) (set (cadr expr) (car args) env)) (+ 1 index))))
            ((eqv? (car expr) 'set) (eval exprs (set (cadr expr) (caddr expr) env) (+ 1 index)))
            ((eqv? (car expr) 'cp) (eval exprs (set (cadr expr) (assocv (caddr expr) env) env) (+ 1 index)))
+           ((eqv? (car expr) 'incr) (eval exprs (set (cadr expr) (+ 1 (assocv (caddr expr) env)) env) (+ 1 index)))
 	   ((eqv? (car expr) 'ret) (let stack (assocv 'stack env) (eval exprs (set 'stack (cdr stack) env) (car stack))))
+	   ((eqv? (car expr) 'comment) (eval exprs env (+ 1 index)))
 	   ((eqv? (car expr) 'halt) env)))))
 (define (enumerate exprs num)
   (if
@@ -75,12 +77,38 @@
 "	   
 (define 
   assembly 
-  '((label lam1)
+  '((label incr)
+    (comment (x -> x+1))
+    (pop x)
+    (incr resp x)
+    (ret)
+ 
+    (label dechurch)
+    (comment (renders a church numeral as an int))
+    (pop n)
+    (pushp incr)
+    (push 0)
+    (call n)
+    (ret)
+
+    (label two)
+    (comment (f -> x -> (f (f x))))
+    (pop x)
+    (pop f)
+    (pushp x)
+    (call incr)
+    (pushp resp)
+    (call incr)
+    (ret)
+  
+    (label lam1)
+    (comment (x -> x))
     (pop x)
     (cp resp x)
     (ret)
 
     (label lam2)
+    (comment (x -> y -> (x y)))
     (pop y)
     (pop x)
     (pushp y)
@@ -88,14 +116,18 @@
     (ret)
 
     (label lam3)
+    (comment (returns once curried func))
     (cp resp lam2)
     (ret)
 
     (label main)
+    (comment (typed as int (lam1 lam3 two)))
     (pushp lam1)
     (call lam3)
-    (push 2)
-    (call resp)))    
+    (pushp two)
+    (call resp)
+    (pushp resp)
+    (call dechurch)))    
 
 (define env (init-env assembly))
 (define index (init-index env))
