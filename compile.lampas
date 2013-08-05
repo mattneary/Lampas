@@ -11,7 +11,7 @@
         (list key val)
         item))
     hash) (list key val)))
-(define (assocv key hash) (cadr (assoc key hash)))
+(define (assocv key hash) (if (eqv? #f (assoc key hash)) '() (cadr (assoc key hash))))
 (define (cond-set conds)
   (if
     (null? conds)
@@ -48,8 +48,11 @@
   (let 
     expr 
     (get exprs index)
-    (cond (((eqv? (car expr) 'jmp) (let stack (assocv 'stack env) (eval exprs (set 'stack (cons (+ 1 index) stack) env) (cadr expr))))
-           ((eqv? (car expr) 'jmpp) (let stack (assocv 'stack env) (eval exprs (set 'stack (cons (+ 1 index) stack) env) (assocv (cadr expr) env))))
+    (cond (((eqv? (car expr) 'jmp) (eval exprs env (assocv (cadr expr) env)))
+           ((eqv? (car expr) 'call) (let stack (assocv 'stack env) (eval exprs (set 'stack (cons (+ 1 index) stack) env) (assocv (cadr expr) env))))
+	   ((eqv? (car expr) 'push) (eval exprs (set 'args (push (assocv 'args env) (cadr expr)) env) (+ 1 index)))
+	   ((eqv? (car expr) 'pushp) (eval exprs (set 'args (push (assocv 'args env) (assocv (cadr expr) env)) env) (+ 1 index)))
+	   ((eqv? (car expr) 'pop) (let args (assocv 'args env) (eval exprs (set 'args (cdr args) (set (cadr expr) (car args) env)) (+ 1 index))))
            ((eqv? (car expr) 'set) (eval exprs (set (cadr expr) (caddr expr) env) (+ 1 index)))
            ((eqv? (car expr) 'cp) (eval exprs (set (cadr expr) (assocv (caddr expr) env) env) (+ 1 index)))
 	   ((eqv? (car expr) 'ret) (let stack (assocv 'stack env) (eval exprs (set 'stack (cdr stack) env) (car stack))))
@@ -63,7 +66,7 @@
       (cons (push (car exprs) num) (enumerate (cdr exprs) num))
       (cons (push (car exprs) num) (enumerate (cdr exprs) (+ 1 num))))))
 (define (init-env exprs)
-  (push (map (lambda (label) (cdr label)) (filter (lambda (expr) (eqv? (car expr) 'label)) (enumerate exprs 0))) '(stack ())))
+  (concat (map (lambda (label) (cdr label)) (filter (lambda (expr) (eqv? (car expr) 'label)) (enumerate exprs 0))) '((stack ()) (args ()))))
 (define (remove-labels exprs)
   (filter (lambda (expr) (not (eqv? (car expr) 'label))) exprs))  
 (define (init-index env)
@@ -73,27 +76,26 @@
 (define 
   assembly 
   '((label lam1)
-    (cp x arg)
+    (pop x)
     (cp resp x)
     (ret)
-    
+
     (label lam2)
-    (cp y arg)
-    (cp arg y)
-    (jmpp x)
-    (cp resp resp)
-    (ret) 
+    (pop y)
+    (pop x)
+    (push y)
+    (call x)
 
     (label lam3)
-    (cp x arg)
-    (cp resp lam2)
+    (pop x)
+    (cp resp x)
     (ret)
 
     (label main)
-    (cp arg lam1)
-    (jmpp lam3)
-    (set arg 2)
-    (jmpp resp)))    
+    (pushp lam1)
+    (call lam3)
+    (push 2)
+    (call resp)))    
 
 (define env (init-env assembly))
 (define index (init-index env))
