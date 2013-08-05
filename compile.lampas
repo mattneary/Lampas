@@ -116,7 +116,7 @@
     (ret)
 
     (label lam3)
-    (comment (returns once curried func))
+    (comment (x -> lam2))
     (cp resp lam2)
     (ret)
 
