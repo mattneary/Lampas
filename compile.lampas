@@ -68,24 +68,32 @@
   (filter (lambda (expr) (not (eqv? (car expr) 'label))) exprs))  
 (define (init-index env)
   (assocv 'main env))  
-" example: ((lambda (x) (x 2)) (lambda (x) x))
+" example: (((lambda (x) (lambda (y) (x y))) (lambda (x) x)) 2)
 "	   
 (define 
   assembly 
   '((label lam1)
-    (cp resp arg)
+    (cp x arg)
+    (cp resp x)
     (ret)
     
     (label lam2)
-    (cp fn arg)
-    (set arg 2)
-    (jmpp fn)
+    (cp y arg)
+    (cp arg y)
+    (jmpp x)
     (cp resp resp)
     (ret) 
 
+    (label lam3)
+    (cp x arg)
+    (cp resp lam2)
+    (ret)
+
     (label main)
-    (cp arg lam1) 
-    (jmpp lam2)))    
+    (cp arg lam1)
+    (jmpp lam3)
+    (set arg 2)
+    (jmpp resp)))    
 
 (define env (init-env assembly))
 (define index (init-index env))
