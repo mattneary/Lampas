@@ -1,0 +1,73 @@
+(load "src/Prelude.lampas")
+
+" Builtin to the book's Language (Tarpits & Abstraction)
+"
+(define 
+  (set key val hash)
+  (push (map
+    (lambda (item)
+      (if
+        (equal? (car item) key)
+        (list key val)
+        item))
+    hash) (list key val)))
+(define (assocv key hash) (cadr (assoc key hash)))
+(define (cond-set conds)
+  (if
+    (null? conds)
+    '#f
+    (list 
+      (list 
+        'lambda 
+	'(found) 
+	(list 'if 'found (cadar conds) (cond-set (cdr conds)))) 
+      (car (car conds)))))
+(defmacro (cond conds) (cond-set conds))
+(define
+  (let-set vars expr)
+  (if
+    (null? vars)
+    expr
+    (list (list 'lambda (list (car (car vars))) (let-set (cdr vars) expr)) (car (cdr (car vars))))))
+(defmacro (let* vars expr) (let-set vars expr))
+(defmacro (let key val expr) `((lambda (,key) ,expr) ,val))
+
+
+" Register Machine
+"
+(define (get lst index)
+  (if
+    (null? lst)
+    '(halt)
+    (if
+      (eqv? index 0)
+      (car lst)
+      (get (cdr lst) (- index 1)))))
+(define (eval exprs env index)
+  (write (get exprs index))
+  (let 
+    expr 
+    (get exprs index)
+    (cond (((eqv? (car expr) 'jmp) (let stack (assocv 'stack env) (eval exprs (set 'stack (cons (+ 1 index) stack) env) (cadr expr))))
+           ((eqv? (car expr) 'jmpp) (let stack (assocv 'stack env) (eval exprs (set 'stack (cons (+ 1 index) stack) env) (assocv (cadr expr) env))))
+           ((eqv? (car expr) 'set) (eval exprs (set (cadr expr) (caddr expr) env) (+ 1 index)))
+           ((eqv? (car expr) 'cp) (eval exprs (set (cadr expr) (assocv (caddr expr) env) env) (+ 1 index)))
+	   ((eqv? (car expr) 'ret) (let stack (assocv 'stack env) (eval exprs (set 'stack (cdr stack) env) (car stack))))
+	   ((eqv? (car expr) 'halt) env)))))
+" example: ((lambda (x) (x 2)) (lambda (x) x))
+"	   
+(define 
+  assembly 
+  '((cp resp arg)
+    (ret)
+    
+    (cp fn arg)
+    (set arg 2)
+    (jmpp fn)
+    (cp resp resp)
+    (ret) 
+
+    (set arg 0) 
+    (jmp 2)))
+(define index 7)    
+(write (assocv 'resp (eval assembly '((stack ())) index)))
